@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   BarChart,
   Bar,
@@ -59,7 +60,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
           <XAxis dataKey="month" tick={{ fontSize: 12 }} />
           <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 12 }} />
-          <Tooltip formatter={(value: number) => formatCurrency(value)} />
+          <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
           <Legend />
           <Bar dataKey="income" name="Income" fill="#10B981" radius={[4, 4, 0, 0]} />
           <Bar dataKey="expenses" name="Expenses" fill="#EF4444" radius={[4, 4, 0, 0]} />
@@ -102,13 +103,13 @@ export function CategoryChart({ data }: CategoryChartProps) {
               outerRadius={100}
               paddingAngle={3}
               dataKey="value"
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              label={({ name, percent }: any) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
             >
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number) => formatCurrency(value)} />
+            <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
           </PieChart>
         </ResponsiveContainer>
         <div className="flex flex-col gap-2 min-w-[200px]">
