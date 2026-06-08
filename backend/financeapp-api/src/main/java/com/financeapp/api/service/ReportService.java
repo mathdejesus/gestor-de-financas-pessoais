@@ -95,17 +95,17 @@ public class ReportService {
 
                 PdfPCell typeCell = createCell(t.getTransactionType().toString(), smallFont);
                 if (t.getTransactionType() == TransactionType.INCOME) {
-                    typeCell.setFont(FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(34, 197, 94)));
+                    typeCell.setPhrase(new Phrase(t.getTransactionType().toString(), FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(34, 197, 94))));
                 } else {
-                    typeCell.setFont(FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(239, 68, 68)));
+                    typeCell.setPhrase(new Phrase(t.getTransactionType().toString(), FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(239, 68, 68))));
                 }
                 txTable.addCell(typeCell);
 
                 PdfPCell amountCell = createCell(formatCurrency(t.getAmount()), smallFont);
                 if (t.getTransactionType() == TransactionType.EXPENSE) {
-                    amountCell.setFont(FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(239, 68, 68)));
+                    amountCell.setPhrase(new Phrase(formatCurrency(t.getAmount()), FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(239, 68, 68))));
                 } else {
-                    amountCell.setFont(FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(34, 197, 94)));
+                    amountCell.setPhrase(new Phrase(formatCurrency(t.getAmount()), FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(34, 197, 94))));
                 }
                 txTable.addCell(amountCell);
             }
@@ -135,9 +135,9 @@ public class ReportService {
 
                     PdfPCell statusCell = createCell(g.getStatus().toString(), smallFont);
                     switch (g.getStatus()) {
-                        case COMPLETED -> statusCell.setFont(FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(34, 197, 94)));
-                        case ABANDONED -> statusCell.setFont(FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(239, 68, 68)));
-                        default -> statusCell.setFont(FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(59, 130, 246)));
+                        case COMPLETED -> statusCell.setPhrase(new Phrase(g.getStatus().toString(), FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(34, 197, 94))));
+                        case ABANDONED -> statusCell.setPhrase(new Phrase(g.getStatus().toString(), FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(239, 68, 68))));
+                        default -> statusCell.setPhrase(new Phrase(g.getStatus().toString(), FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(59, 130, 246))));
                     }
                     goalTable.addCell(statusCell);
                 }
