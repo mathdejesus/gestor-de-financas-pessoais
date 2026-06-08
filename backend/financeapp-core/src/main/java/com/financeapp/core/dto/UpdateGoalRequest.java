@@ -1,0 +1,32 @@
+package com.financeapp.core.dto;
+
+import com.financeapp.core.enums.GoalStatus;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UpdateGoalRequest {
+
+    @Size(min = 1, max = 255, message = "Description must be between 1 and 255 characters")
+    private String description;
+
+    @Positive(message = "Target value must be positive")
+    private BigDecimal targetValue;
+
+    @Positive(message = "Current value must be positive")
+    private BigDecimal currentValue;
+
+    private LocalDate deadline;
+
+    private GoalStatus status;
+}

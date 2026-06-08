@@ -1,0 +1,20 @@
+{
+  "name": "financial-management-platform",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "mobile"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.7",
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "prettier": "^3.8.3"
+  }
+}
