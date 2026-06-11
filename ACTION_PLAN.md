@@ -1,246 +1,1093 @@
-# 📋 Plano de Ação — Gestor de Finanças Pessoais
+# Diagnóstico e Solução de Erros CI/CD \- Financial Management Platform
 
-> Plano estruturado baseado em `AGENTS.md` e `Financial_Management_Platform_REVISADO.md` para conclusão do projeto por fases.
-
----
-
-## 🎯 Visão Geral do Plano
-
-| Fase | Versão | Foco Principal | Duração | Status |
-|------|--------|----------------|---------|--------|
-| **Fase 1** | v1.0.0 (MVP) | Auth + CRUD Transações/Categorias + Testes base | 6-8 sem | 🚧 **EM ANDAMENTO** |
-| **Fase 2** | v2.0.0 | Dashboard, Gráficos, KPIs, Export CSV, E2E | 4-6 sem | ⏳ Planejado |
-| **Fase 3** | v3.0.0 | Metas Financeiras, Relatórios PDF, Email | 4-6 sem | ⏳ Planejado |
-| **Fase 4** | v4.0.0 | React Native Mobile, Push, Offline | 8-10 sem | ⏳ Planejado |
+**Data:** Junho 2026  
+**Projeto:** Financial Management Platform  
+**Repositório:** [https://github.com/mathdejesus/gestor-de-financas-pessoais](https://github.com/mathdejesus/gestor-de-financas-pessoais)  
+**Status:** Erros identificados em pipeline GitHub Actions (frontend e mobile)
 
 ---
 
-## 📦 FASE 1 — MVP (v1.0.0) — 6-8 SEMANAS
+## RESUMO EXECUTIVO
 
-**Objetivo**: Sistema funcional básico com autenticação, CRUD completo de transações e categorias, testes e documentação.
+O projeto tem **3 problemas críticos** no CI/CD:
 
-### Sprint 1-2: Setup & Fundação (2 semanas)
-
-| Task ID | Tarefa | Responsável | Status | Dependências |
-|---------|--------|-------------|--------|--------------|
-| F1.1 | Configurar repositório Git (branch protection, PR template) | Time | ⬜ | — |
-| F1.2 | Validar docker-compose.yml (3 serviços: frontend, backend, postgres) | Time | ⬜ | — |
-| F1.3 | Configurar `.env.example` backend e frontend | Time | ⬜ | F1.2 |
-| F1.4 | Validar Flyway migrations (V1-V4) rodam corretamente | Time + Nemotron | ⬜ | F1.2 |
-| F1.5 | Configurar GitHub Actions CI (test-frontend, test-backend) | Time | ⬜ | F1.1 |
-| F1.6 | Configurar Husky + lint-staged + commitlint | Time | ⬜ | F1.1 |
-
-### Sprint 3-4: Autenticação JWT (2 semanas)
-
-| Task ID | Tarefa | Responsável | Status | Dependências |
-|---------|--------|-------------|--------|--------------|
-| F1.7 | Implementar `JwtUtil` (geração/validação RS256) | Nemotron | ⬜ | F1.4 |
-| F1.8 | Implementar `AuthService` (register, login, refresh, password hash BCrypt 12) | Nemotron | ⬜ | F1.7 |
-| F1.9 | Implementar `SecurityConfig` + `JwtAuthenticationFilter` | Nemotron | ⬜ | F1.8 |
-| F1.10 | Criar `AuthController` (/login, /register, /refresh) | Nemotron | ⬜ | F1.9 |
-| F1.11 | Criar DTOs: `LoginRequest`, `RegisterRequest`, `AuthResponse`, `RefreshTokenRequest` | Nemotron | ⬜ | F1.8 |
-| F1.12 | Testes unitários AuthService (JUnit 5 + Mockito) | Nemotron + Time | ⬜ | F1.10 |
-| F1.13 | Frontend: Páginas Login/Register + Context API Auth + Axios interceptors | Time + Nemotron | ⬜ | F1.10 |
-| F1.14 | Testes integração Auth (TestContainers) | Time | ⬜ | F1.12 |
-
-### Sprint 5-6: CRUD Categorias (2 semanas)
-
-| Task ID | Tarefa | Responsável | Status | Dependências |
-|---------|--------|-------------|--------|--------------|
-| F1.15 | Implementar `CategoryRepository` + `CategoryService` (CRUD + user scoping) | Nemotron | ⬜ | F1.11 |
-| F1.16 | Criar `CategoryController` (/api/v1/categories) | Nemotron | ⬜ | F1.15 |
-| F1.17 | DTOs: `CategoryDTO`, `CreateCategoryRequest`, `UpdateCategoryRequest` | Nemotron | ⬜ | F1.15 |
-| F1.18 | Validações Jakarta (`@NotBlank`, `@Size`, unique constraint) | Nemotron | ⬜ | F1.17 |
-| F1.19 | Testes unitários CategoryService (meta 80%+) | Nemotron + Time | ⬜ | F1.18 |
-| F1.20 | Frontend: Página Categorias (listar, criar, editar, deletar) + formulários Zod | Time + Nemotron | ⬜ | F1.16 |
-
-### Sprint 7-8: CRUD Transações (2 semanas)
-
-| Task ID | Tarefa | Responsável | Status | Dependências |
-|---------|--------|-------------|--------|--------------|
-| F1.21 | Implementar `TransactionRepository` (queries: por user, data range, categoria, tipo) | Nemotron | ⬜ | F1.15 |
-| F1.22 | Implementar `TransactionService` (CRUD + validações negócio) | Nemotron | ⬜ | F1.21 |
-| F1.23 | Criar `TransactionController` (/api/v1/transactions) | Nemotron | ⬜ | F1.22 |
-| F1.24 | DTOs: `TransactionDTO`, `CreateTransactionRequest`, `UpdateTransactionRequest` | Nemotron | ⬜ | F1.22 |
-| F1.25 | Enum `TransactionType` (INCOME, EXPENSE) + validações | Nemotron | ⬜ | F1.24 |
-| F1.26 | Testes unitários TransactionService (meta 80%+) | Nemotron + Time | ⬜ | F1.25 |
-| F1.27 | Frontend: Página Transações (tabela, filtros data/categoria/tipo, paginação, modal form) | Time + Nemotron | ⬜ | F1.23 |
-
-### Sprint 9-10: Qualidade, Docs & Release v1.0.0 (2 semanas)
-
-| Task ID | Tarefa | Responsável | Status | Dependências |
-|---------|--------|-------------|--------|--------------|
-| F1.28 | OpenAPI/Swagger annotations em todos controllers | Nemotron | ⬜ | F1.27 |
-| F1.29 | GlobalExceptionHandler + problem details (RFC 7807) | Nemotron | ⬜ | F1.23 |
-| F1.30 | Aumentar cobertura testes backend (meta 80%+) | Time | ⬜ | F1.26 |
-| F1.31 | Aumentar cobertura testes frontend (meta 60%+) | Time | ⬜ | F1.27 |
-| F1.32 | Testes E2E Cypress (fluxo: login → criar categoria → criar transação) | Time + Nemotron | ⬜ | F1.31 |
-| F1.33 | Validar docker-compose produção (multi-stage, healthchecks) | Time | ⬜ | F1.5 |
-| F1.34 | Release v1.0.0 (tag, changelog, Docker images) | Time | ⬜ | F1.33 |
+| Problema | Causa | Impacto | Severidade |
+| :---- | :---- | :---- | :---- |
+| Frontend falha em npm ci | `package-lock.json` não existe no diretório `frontend/` | Build quebrado | 🔴 CRÍTICA |
+| Conflito de versões de tooling | `@commitlint/cli`, `lint-staged`, `prettier` duplicados | Instabilidade de deps | 🟠 ALTA |
+| Mobile quebra pipeline | Workspace Expo incompatível \+ projeto é web-only | Falsa complexidade | 🟠 ALTA |
 
 ---
 
-## 📊 FASE 2 — Dashboard & Análise (v2.0.0) — 4-6 SEMANAS
+## PARTE 1: DIAGNÓSTICO DETALHADO
 
-**Objetivo**: Visualização de dados financeiros com gráficos interativos e KPIs.
+### 1.1 Problema: Frontend não encontra `package-lock.json`
 
-| Task ID | Tarefa | Responsável | Status | Dependências |
-|---------|--------|-------------|--------|--------------|
-| F2.1 | Backend: `DashboardService` (saldo, receitas, despesas, economia, médias) | Nemotron | ⏳ | F1.34 |
-| F2.2 | Backend: `DashboardController` (/api/v1/dashboard/summary, /charts) | Nemotron | ⏳ | F2.1 |
-| F2.3 | Frontend: Página Dashboard (cards KPIs: saldo, receitas, despesas, % economia) | Time + Nemotron | ⏳ | F2.2 |
-| F2.4 | Frontend: Gráficos Recharts (barras mensais, pizza categorias, linha evolução) | Time + Nemotron | ⏳ | F2.3 |
-| F2.5 | Frontend: Filtros de período (mês atual, últimos 3m, 6m, 12m, custom) | Time | ⏳ | F2.4 |
-| F2.6 | Backend: Endpoint exportação CSV transações filtradas | Nemotron | ⏳ | F2.1 |
-| F2.7 | Frontend: Botão exportar CSV | Time | ⏳ | F2.6 |
-| F2.8 | Testes E2E Cypress (dashboard, filtros, export) | Time | ⏳ | F2.5 |
-| F2.9 | Release v2.0.0 | Time | ⏳ | F2.8 |
+**O que está acontecendo:**
 
----
+O arquivo `package.json` da raiz declara:
 
-## 🎯 FASE 3 — Metas & Relatórios (v3.0.0) — 4-6 SEMANAS
+{
 
-**Objetivo**: Metas financeiras com progresso e relatórios avançados em PDF.
+  "workspaces": \[
 
-| Task ID | Tarefa | Responsável | Status | Dependências |
-|---------|--------|-------------|--------|--------------|
-| F3.1 | Backend: `GoalService` + `GoalRepository` (CRUD + progress tracking) | Nemotron | ⏳ | F2.9 |
-| F3.2 | Backend: `GoalController` (/api/v1/goals, /goals/{id}/progress) | Nemotron | ⏳ | F3.1 |
-| F3.3 | DTOs: `GoalDTO`, `CreateGoalRequest`, `UpdateGoalRequest` + Enum `GoalStatus` | Nemotron | ⏳ | F3.1 |
-| F3.4 | Frontend: Página Metas (cards progresso, criar/editar/deletar, atualizar valor) | Time + Nemotron | ⏳ | F3.2 |
-| F3.5 | Backend: `ReportService` (PDF com iText/Apache FOP) | Nemotron | ⏳ | F2.9 |
-| F3.6 | Backend: `ReportController` (/api/v1/reports/monthly, /category, /goals) | Nemotron | ⏳ | F3.5 |
-| F3.7 | Agendamento relatórios (Spring @Scheduled + config) | Time + Nemotron | ⏳ | F3.6 |
-| F3.8 | Email notifications (SendGrid/SMTP) para relatórios agendados | Time | ⏳ | F3.7 |
-| F3.9 | Release v3.0.0 | Time | ⏳ | F3.8 |
+    "frontend",
 
----
+    "mobile"
 
-## 📱 FASE 4 — Mobile React Native (v4.0.0) — 8-10 SEMANAS
+  \]
 
-**Objetivo**: App nativo iOS/Android com sincronização e modo offline.
+}
 
-| Task ID | Tarefa | Responsável | Status | Dependências |
-|---------|--------|-------------|--------|--------------|
-| F4.1 | Setup React Native (Expo ou CLI) + TypeScript + Tailwind (NativeWind) | Time | ⏳ | F3.9 |
-| F4.2 | Shared types package (DTOs compartilhados backend↔frontend↔mobile) | Nemotron + Time | ⏳ | F4.1 |
-| F4.3 | Auth no mobile (AsyncStorage para tokens, biometria opcional) | Time + Nemotron | ⏳ | F4.2 |
-| F4.4 | Sincronização offline-first (React Query + persistência local) | Time | ⏳ | F4.3 |
-| F4.5 | Telas: Login, Dashboard, Transações, Categorias, Metas | Time + Nemotron | ⏳ | F4.4 |
-| F4.6 | Push Notifications (Expo Notifications / FCM + APNs) | Time | ⏳ | F4.5 |
-| F4.7 | Build & Deploy: EAS Build / Fastlane → App Store / Play Store | Time | ⏳ | F4.6 |
-| F4.8 | Release v4.0.0 | Time | ⏳ | F4.7 |
+Com npm workspaces, **existe apenas UM arquivo `package-lock.json`** na raiz do projeto.
 
----
+No `.github/workflows/ci.yml`, o step "Install dependencies" está configurado assim:
 
-## 🔧 TAREFAS TRANSVERSAIS (Contínuas)
+test-frontend:
 
-| Task ID | Tarefa | Frequência | Responsável |
-|---------|--------|------------|-------------|
-| TX.1 | Code review obrigatório (2+ approvals) | Todo PR | Time |
-| TX.2 | Atualizar dependências (Dependabot/Renovate) | Semanal | Time |
-| TX.3 | Security scanning (OWASP ZAP, Snyk) | A cada release | Time |
-| TX.4 | Performance testing (k6/JMeter) | Pré-release | Time |
-| TX.5 | Atualizar documentação (README, AGENTS, Swagger) | Contínuo | Nemotron + Time |
-| TX.6 | Monitoramento logs/alertas (CloudWatch) | Produção | Time |
-| TX.7 | Backup & Disaster Recovery test | Mensal | Time |
+  defaults:
+
+    run:
+
+      working-directory: frontend
+
+  steps:
+
+    \- name: Install dependencies
+
+      run: npm ci
+
+    \# npm ci procura por package-lock.json
+
+    \# Procura em: frontend/package-lock.json (NÃO EXISTE)
+
+**Resultado:** Erro imediato
+
+npm error The \`npm ci\` command can only install with an 
+
+existing package-lock.json or npm-shrinkwrap.json
+
+npm ERR\! code EWORKSPACEMISSING
+
+**Raiz do problema:**
+
+- Workspace requer UM lockfile na raiz  
+- CI tenta usar `npm ci` em subdiretório  
+- Subdiretório não tem seu próprio lockfile  
+- ❌ Incompatibilidade entre modelo de workspace e script de CI
 
 ---
 
-## ✅ CRITÉRIOS DE ACEITAÇÃO POR FASE
+### 1.2 Problema: Conflito de versões de dependências compartilhadas
 
-### MVP (v1.0.0) — Definition of Done
-- [ ] Usuário consegue se registrar, logar, renovar token
-- [ ] CRUD Categorias funcionando (user-scoped)
-- [ ] CRUD Transações funcionando (filtros, paginação)
-- [ ] Testes backend ≥ 80%, frontend ≥ 60%
-- [ ] Swagger UI documentando 100% endpoints
-- [ ] `docker compose up -d` sobe tudo localmente
-- [ ] CI/CD passando no GitHub Actions
-- [ ] Deploy staging funcional
+**O que está acontecendo:**
 
-### v2.0.0 — Definition of Done
-- [ ] Dashboard com 4+ KPIs e 3+ gráficos interativos
-- [ ] Filtros de período funcionando
-- [ ] Export CSV funciona
-- [ ] Testes E2E cobrindo fluxos críticos (≥ 50%)
-- [ ] Responsivo (320px - 1920px)
+Arquivo `package.json` (raiz):
 
-### v3.0.0 — Definition of Done
-- [ ] Metas: criar, editar, deletar, atualizar progresso
-- [ ] Visualização progresso (barra, %)
-- [ ] Relatório PDF gerado e baixável
-- [ ] Agendamento diário/semanal/mensal
-- [ ] Email de notificação enviado
+"devDependencies": {
 
-### v4.0.0 — Definition of Done
-- [ ] App iOS e Android nas stores
-- [ ] Sync offline→online sem perda de dados
-- [ ] Push notifications funcionando
-- [ ] Biometria opcional para login
+  "@commitlint/cli": "^19.3.0",
 
----
+  "@commitlint/config-conventional": "^19.2.2",
 
-## 📅 CRONOGRAMA RESUMIDO
+  "husky": "^9.1.7",
 
-```
-2026
-├── Jun-Jul    ████████  FASE 1: MVP (8 sem)
-├── Ago-Set    ██████    FASE 2: Dashboard (6 sem)
-├── Out-Nov    ██████    FASE 3: Metas/Relatórios (6 sem)
-└── Dez-2027Fev ██████████ FASE 4: Mobile (10 sem)
-```
+  "lint-staged": "^15.2.7",
 
----
+  "prettier": "^3.8.3"
 
-## 🛠️ COMANDOS ÚTEIS PARA EXECUÇÃO
+}
 
-```bash
-# Verificar status geral
-git status
-docker compose ps
+Arquivo `frontend/package.json`:
 
-# Rodar todos os testes
-cd backend && mvn clean verify
-cd frontend && npm run test:coverage
+"devDependencies": {
 
-# Ver cobertura
-# Backend: open backend/financeapp-api/target/site/jacoco/index.html
-# Frontend: open frontend/coverage/index.html
+  "@commitlint/cli": "^21.0.2",      // ← CONFLITA
 
-# Build produção
-docker compose -f docker-compose.yml -f docker-compose.prod.yml build
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+  "@commitlint/config-conventional": "^21.0.2",  // ← CONFLITA
 
-# Logs produção
-docker compose logs -f --tail=100
+  "husky": "^9.1.7",
 
-# Rollback rápido
-docker compose down && docker compose up -d --force-recreate
-```
+  "lint-staged": "^17.0.7",          // ← CONFLITA
+
+  "prettier": "^3.8.3",
+
+  // ... mais deps do frontend
+
+}
+
+**Resultado:**
+
+- npm resolve ambas, mas com versões diferentes em contextos diferentes  
+- Husky pode procurar versão errada de commitlint  
+- Prettier pode ter comportamento inconsistente  
+- lint-staged não encontra ESLint na versão esperada
+
+**Raiz do problema:**
+
+- Mesma ferramenta de tooling declarada em 2 lugares  
+- Versões incompatíveis (^19 vs ^21, ^15 vs ^17)  
+- npm workspace tenta resolver tudo em um único grafo de dependências  
+- ❌ Duplicação desnecessária causa conflito
 
 ---
 
-## 📝 NOTAS PARA O TIME
+### 1.3 Problema: Mobile (Expo) quebra o pipeline
 
-1. **Nemotron 3 Ultra** gera código base (controllers, services, testes, docs) — **sempre revisar antes de merge**
-2. **Decisões arquiteturais** (ex: Context API vs Redux, padrão de validação) são do **Time**
-3. **Setup de nuvem** (AWS, secrets, IAM) é responsabilidade exclusiva do **Time**
-4. **Testes de integração/E2E/manual** são do **Time** — Nemotron ajuda com unitários
-5. **Deploy inicial em produção** deve ser feito pelo **Time** com rollback plan
+**O que está acontecendo:**
+
+Arquivo `mobile/package.json` existe e contém:
+
+{
+
+  "dependencies": {
+
+    "expo": "\~56.0.9",
+
+    "react-native": "0.85.3",
+
+    "expo-secure-store": "\~56.0.4"
+
+  },
+
+  "scripts": {
+
+    "start": "expo start",
+
+    "android": "expo start \--android",
+
+    "ios": "expo start \--ios",
+
+    "web": "expo start \--web"
+
+  }
+
+}
+
+Arquivo `.github/workflows/ci.yml` tenta:
+
+test-mobile:
+
+  steps:
+
+    \- name: Check TypeScript
+
+      run: npx tsc \--noEmit
+
+      working-directory: mobile
+
+    
+
+    \- name: Check formatting
+
+      run: npx prettier \--check "src/\*\*/\*.{ts,tsx}"
+
+      working-directory: mobile
+
+**Problema 1:** `npx tsc` tenta resolver `expo/tsconfig.base` (do `tsconfig.json`):
+
+{
+
+  "extends": "expo/tsconfig.base"
+
+}
+
+Mas Expo não foi instalado corretamente no workspace.
+
+**Problema 2:** **O requisito do projeto é "exclusivamente web"**
+
+Foco primário é o mobile first
+
+Ele será disponibilizado exclusivamente em navegador web
+
+Expo (React Native) é para apps nativos iOS/Android. **Completamente incompatível** com "navegador web".
+
+**Resultado:**
+
+- CI falha tentando compilar Expo no Ubuntu (sem emulador)  
+- Pasta `mobile/` deveria não existir em projeto web  
+- Pipeline perde tempo processando algo que será deletado  
+- ❌ Decisão arquitetural (web-only) entra em conflito com workspace
 
 ---
 
-## 🔗 LINKS ÚTEIS
+## PARTE 2: SOLUÇÃO COMPLETA
 
-- **Especificação Completa**: [`Financial_Management_Platform_REVISADO.md`](./Financial_Management_Platform_REVISADO.md)
-- **Guia Agentes/IA**: [`AGENTS.md`](./AGENTS.md)
-- **Swagger UI (local)**: `http://localhost:8080/swagger-ui.html`
-- **GitHub Actions**: `.github/workflows/ci.yml`
-- **Docker Compose**: `docker-compose.yml`
+### 2.1 Passo 1: Remover workspace `mobile/`
+
+A pasta `mobile/` deve ser **deletada permanentemente** do repositório, pois:
+
+- Projeto é web-only (requisito confirmado)  
+- Mobile será implementado em V4, com tecnologia diferente  
+- Atualmente causa problemas de CI sem benefício
+
+**Como fazer:**
+
+Opção A: Deletar diretamente (se não há histórico valioso):
+
+git rm \-r mobile/
+
+git commit \-m "chore: remove mobile workspace (web-only project, v4 later)"
+
+git push origin main
+
+Opção B: Arquivar em branch separada (mais seguro):
+
+\# Criar branch de arquivo antes de deletar
+
+git checkout \-b archive/mobile-rn-v0
+
+git push origin archive/mobile-rn-v0
+
+\# Voltar para main e deletar
+
+git checkout main
+
+git rm \-r mobile/
+
+git commit \-m "chore: remove mobile workspace (archived in branch archive/mobile-rn-v0)"
+
+git push origin main
+
+**Depois de deletar, o package.json raiz muda para:**
+
+{
+
+  "name": "financial-management-platform",
+
+  "private": true,
+
+  "scripts": {
+
+    "prepare": "husky",
+
+    "lint": "npm run lint \--prefix frontend",
+
+    "test": "npm run test \--prefix frontend",
+
+    "build": "npm run build \--prefix frontend"
+
+  },
+
+  "devDependencies": {
+
+    "@commitlint/cli": "^19.3.0",
+
+    "@commitlint/config-conventional": "^19.2.2",
+
+    "husky": "^9.1.7",
+
+    "lint-staged": "^15.2.7",
+
+    "prettier": "^3.8.3"
+
+  }
+
+}
+
+**Mudanças importantes:**
+
+- ❌ Remove: `"workspaces": ["frontend", "mobile"]`  
+- ✅ Adiciona: `scripts` com `--prefix frontend` para chamar frontend  
+- ✅ Mantém: tooling compartilhado (Husky, commitlint, prettier)
 
 ---
 
-**Última atualização**: Junho 2026  
-**Versão do plano**: 1.0  
-**Próxima revisão**: Início de cada sprint
+### 2.2 Passo 2: Limpar `frontend/package.json`
+
+O frontend deve **gerenciar suas próprias dependências**, não compartilhar tooling com a raiz.
+
+Remove estas linhas de `frontend/devDependencies`:
+
+  "devDependencies": {
+
+\-   "@commitlint/cli": "^21.0.2",
+
+\-   "@commitlint/config-conventional": "^21.0.2",
+
+    "@eslint/js": "^9.0.0",
+
+    "@tailwindcss/vite": "^4.3.0",
+
+    "@testing-library/dom": "^10.4.1",
+
+    "@testing-library/jest-dom": "^6.9.1",
+
+    "@testing-library/react": "^16.3.2",
+
+    "@testing-library/user-event": "^14.6.1",
+
+    "@types/node": "^24.12.3",
+
+    "@types/react": "^19.2.14",
+
+    "@types/react-dom": "^19.2.3",
+
+    "@vitejs/plugin-react": "^6.0.1",
+
+    "@vitest/coverage-v8": "^4.1.8",
+
+    "autoprefixer": "^10.5.0",
+
+    "eslint": "^9.7.0",
+
+    "eslint-config-prettier": "^10.1.8",
+
+    "eslint-plugin-react": "^7.35.0",
+
+    "eslint-plugin-react-hooks": "^5.2.0",
+
+    "eslint-plugin-react-refresh": "^0.5.2",
+
+    "globals": "^17.6.0",
+
+\-   "husky": "^9.1.7",
+
+    "jsdom": "^29.1.1",
+
+\-   "lint-staged": "^17.0.7",
+
+    "postcss": "^8.5.15",
+
+\-   "prettier": "^3.8.3",
+
+    "tailwindcss": "^4.3.0",
+
+    "typescript": "\~6.0.2",
+
+    "typescript-eslint": "^8.59.2",
+
+    "vite": "^8.0.12",
+
+    "vitest": "^4.1.8"
+
+  }
+
+**Por que remover?**
+
+- Raiz já gerencia Husky, commitlint, prettier (centralizados)  
+- Frontend não precisa de suas próprias versões  
+- Evita conflito de versões  
+- Reduz tamanho de `node_modules` do frontend
+
+---
+
+### 2.3 Passo 3: Regenerar lockfiles
+
+Depois de alterar `package.json` (raiz) e `frontend/package.json`, **regenere os lockfiles**:
+
+**Na raiz do projeto:**
+
+rm package-lock.json
+
+npm install
+
+**No diretório frontend:**
+
+cd frontend
+
+rm package-lock.json
+
+npm install
+
+cd ..
+
+**Resultado esperado:**
+
+- `package-lock.json` (raiz) — 50-100 linhas, só tooling  
+- `frontend/package-lock.json` — 3000+ linhas, todas as deps do frontend
+
+---
+
+### 2.4 Passo 4: Atualizar `.github/workflows/ci.yml`
+
+**Arquivo completo atualizado:**
+
+name: CI/CD Pipeline
+
+on:
+
+  push:
+
+    branches: \[main, develop\]
+
+  pull\_request:
+
+    branches: \[main, develop\]
+
+jobs:
+
+  \# \============================================
+
+  \# JOB 1: Testes Frontend
+
+  \# \============================================
+
+  test-frontend:
+
+    name: Test Frontend
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      \- name: Checkout code
+
+        uses: actions/checkout@v4
+
+      \- name: Setup Node.js
+
+        uses: actions/setup-node@v4
+
+        with:
+
+          node-version: '22'
+
+          cache: 'npm'
+
+          cache-dependency-path: frontend/package-lock.json
+
+      \- name: Install root dependencies (tooling only)
+
+        run: npm ci
+
+      \- name: Install frontend dependencies
+
+        working-directory: frontend
+
+        run: npm ci
+
+      \- name: Run linter
+
+        working-directory: frontend
+
+        run: npm run lint
+
+      \- name: Check formatting
+
+        working-directory: frontend
+
+        run: npm run format:check
+
+      \- name: Run tests
+
+        working-directory: frontend
+
+        run: npm run test \-- \--run
+
+      \- name: Build frontend
+
+        working-directory: frontend
+
+        run: npm run build
+
+      \- name: Upload build artifacts
+
+        if: always()
+
+        uses: actions/upload-artifact@v4
+
+        with:
+
+          name: frontend-build
+
+          path: frontend/dist/
+
+  \# \============================================
+
+  \# JOB 2: Testes Backend
+
+  \# \============================================
+
+  test-backend:
+
+    name: Test Backend
+
+    runs-on: ubuntu-latest
+
+    services:
+
+      postgres:
+
+        image: postgres:15-alpine
+
+        env:
+
+          POSTGRES\_DB: financial\_platform\_test
+
+          POSTGRES\_USER: postgres
+
+          POSTGRES\_PASSWORD: postgres
+
+        ports:
+
+          \- 5432:5432
+
+        options: \>-
+
+          \--health-cmd pg\_isready
+
+          \--health-interval 10s
+
+          \--health-timeout 5s
+
+          \--health-retries 5
+
+    steps:
+
+      \- name: Checkout code
+
+        uses: actions/checkout@v4
+
+      \- name: Setup Java
+
+        uses: actions/setup-java@v4
+
+        with:
+
+          java-version: '21'
+
+          distribution: 'temurin'
+
+          cache: 'maven'
+
+      \- name: Run backend tests
+
+        working-directory: backend
+
+        run: mvn clean verify \-Ptest
+
+        env:
+
+          SPRING\_DATASOURCE\_URL: jdbc:postgresql://localhost:5432/financial\_platform\_test
+
+          SPRING\_DATASOURCE\_USERNAME: postgres
+
+          SPRING\_DATASOURCE\_PASSWORD: postgres
+
+          JWT\_SECRET: dGVzdC1zZWNyZXQta2V5LWZvci1jaS1vbmx5LW5vdC1wcm9kdWN0aW9u
+
+      \- name: Upload coverage reports
+
+        if: always()
+
+        uses: actions/upload-artifact@v4
+
+        with:
+
+          name: backend-coverage
+
+          path: backend/\*\*/target/site/jacoco/
+
+  \# \============================================
+
+  \# JOB 3: Build Docker
+
+  \# \============================================
+
+  build-docker:
+
+    name: Build Docker Images
+
+    runs-on: ubuntu-latest
+
+    needs: \[test-frontend, test-backend\]
+
+    steps:
+
+      \- name: Checkout code
+
+        uses: actions/checkout@v4
+
+      \- name: Build backend Docker image
+
+        run: docker build \-t financeapp-backend:ci ./backend
+
+      \- name: Build frontend Docker image
+
+        run: docker build \-t financeapp-frontend:ci ./frontend
+
+  \# \============================================
+
+  \# JOB 4: Verificação Final
+
+  \# \============================================
+
+  verify:
+
+    name: All Checks Passed
+
+    runs-on: ubuntu-latest
+
+    needs: \[test-frontend, test-backend, build-docker\]
+
+    steps:
+
+      \- name: Final verification
+
+        run: echo "✅ All CI/CD checks passed \- ready to merge"
+
+**Mudanças principais:**
+
+| Antes | Depois | Motivo |
+| :---- | :---- | :---- |
+| `test-mobile` job | ❌ Removido | Mobile app deletado |
+| `defaults.run.working-directory` | ❌ Removido | Usar `working-directory` por step é mais claro |
+| `needs: [test-frontend, test-backend]` | ✅ Adicionado em `build-docker` e `verify` | Garante ordem de execução |
+| Sem install da raiz | ✅ `npm ci` da raiz adicionado | Instala tooling (Husky, commitlint, prettier) |
+| `cache-dependency-path: mobile/package-lock.json` | ❌ Removido | Mobile não existe mais |
+
+---
+
+### 2.5 Passo 5: Adicionar hook Git (Husky) para local
+
+O Husky executa commitlint **localmente** antes de fazer push, ajudando a prevenir commits inválidos.
+
+**Verificar se Husky está ativo:**
+
+git log \--oneline \-5
+
+\# Se vir mensagens bem formatadas (feat:, fix:, docs:, etc)
+
+\# Husky está funcionando
+
+**Se não estiver, reinicializar:**
+
+npm run prepare
+
+\# Saída esperada:
+
+\# husky \- Git hooks installed
+
+---
+
+## PARTE 3: VALIDAÇÃO DA SOLUÇÃO
+
+### 3.1 Checklist de implementação
+
+- [ ] Deletou `mobile/` via `git rm -r mobile/`  
+- [ ] Atualizou `package.json` (raiz) — removeu `workspaces`, adicionou `scripts`  
+- [ ] Limpou `frontend/package.json` — removeu @commitlint, husky, lint-staged, prettier  
+- [ ] Rodou `npm install` na raiz  
+- [ ] Rodou `cd frontend && npm install`  
+- [ ] Verificou que existem 2 lockfiles: `package-lock.json` e `frontend/package-lock.json`  
+- [ ] Atualizou `.github/workflows/ci.yml` com novo arquivo  
+- [ ] Deletou step `test-mobile`  
+- [ ] Fez push com commit: `chore: fix ci/cd pipeline (remove mobile, fix lockfiles)`
+
+### 3.2 Como testar localmente
+
+**Simular o que GitHub Actions faz:**
+
+\# Simular test-frontend
+
+cd frontend
+
+npm ci  \# Instala exatamente como no CI (não como npm install)
+
+npm run lint
+
+npm run format:check
+
+npm run build
+
+npm run test \-- \--run
+
+\# Simular test-backend
+
+cd ../backend
+
+mvn clean verify \-Ptest
+
+\# Simular build-docker
+
+cd ..
+
+docker build \-t financeapp-frontend:ci ./frontend
+
+docker build \-t financeapp-backend:ci ./backend
+
+**Se todos passarem:** ✅ Pronto para fazer push
+
+---
+
+## PARTE 4: PRÓXIMOS PASSOS PÓS-CORREÇÃO
+
+### 4.1 Implementar Tema Solarized
+
+Adicione ao `frontend/src/index.css`:
+
+:root {
+
+  /\* Solarized \- Cor Base \*/
+
+  \--base03: \#002b36;
+
+  \--base02: \#073642;
+
+  \--base01: \#586e75;
+
+  \--base00: \#657b83;
+
+  \--base0: \#839496;
+
+  \--base1: \#93a1a1;
+
+  \--base2: \#eee8d5;
+
+  \--base3: \#fdf6e3;
+
+  /\* Cores Acentuadas \*/
+
+  \--yellow: \#b58900;
+
+  \--orange: \#cb4b16;
+
+  \--red: \#dc322f;
+
+  \--magenta: \#d33682;
+
+  \--violet: \#6c71c4;
+
+  \--blue: \#268bd2;
+
+  \--cyan: \#2aa198;
+
+  \--green: \#859900;
+
+  /\* Modo Claro (padrão) \*/
+
+  \--bg-primary: var(--base3);
+
+  \--bg-secondary: var(--base2);
+
+  \--fg-primary: var(--base00);
+
+  \--fg-secondary: var(--base01);
+
+  \--accent: var(--blue);
+
+  \--border: var(--base2);
+
+}
+
+/\* Modo Escuro \*/
+
+\[data-theme="dark"\] {
+
+  \--bg-primary: var(--base03);
+
+  \--bg-secondary: var(--base02);
+
+  \--fg-primary: var(--base0);
+
+  \--fg-secondary: var(--base1);
+
+  \--accent: var(--cyan);
+
+  \--border: var(--base02);
+
+}
+
+/\* Aplicar variáveis \*/
+
+body {
+
+  background-color: var(--bg-primary);
+
+  color: var(--fg-primary);
+
+  transition: background-color 0.3s, color 0.3s;
+
+}
+
+.card, .panel {
+
+  background-color: var(--bg-secondary);
+
+  border: 1px solid var(--border);
+
+}
+
+button.primary {
+
+  background-color: var(--accent);
+
+  color: var(--bg-primary);
+
+}
+
+/\* Escuro: adicionar ao html \*/
+
+html\[data-theme="dark"\] {
+
+  color-scheme: dark;
+
+}
+
+Componente para trocar tema:
+
+// frontend/src/components/ThemeToggle.tsx
+
+import { useEffect, useState } from 'react';
+
+export function ThemeToggle() {
+
+  const \[theme, setTheme\] \= useState\<'light' | 'dark'\>('light');
+
+  useEffect(() \=\> {
+
+    const saved \= localStorage.getItem('theme') as 'light' | 'dark' | null;
+
+    const preferred \= window.matchMedia('(prefers-color-scheme: dark)').matches
+
+      ? 'dark'
+
+      : 'light';
+
+    const initial \= saved || preferred;
+
+    setTheme(initial);
+
+    document.documentElement.setAttribute('data-theme', initial);
+
+  }, \[\]);
+
+  const toggle \= () \=\> {
+
+    const newTheme \= theme \=== 'light' ? 'dark' : 'light';
+
+    setTheme(newTheme);
+
+    localStorage.setItem('theme', newTheme);
+
+    document.documentElement.setAttribute('data-theme', newTheme);
+
+  };
+
+  return (
+
+    \<button
+
+      onClick={toggle}
+
+      aria-label="Toggle theme"
+
+      className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+
+    \>
+
+      {theme \=== 'light' ? '🌙' : '☀️'}
+
+    \</button\>
+
+  );
+
+}
+
+### 4.2 Implementar Chatbot de Entrada de Dados
+
+Componente que aceita linguagem natural e extrai campos:
+
+// frontend/src/components/ChatbotInput.tsx
+
+import { useState } from 'react';
+
+import axios from 'axios';
+
+import { transactionApi } from '../services/api';
+
+import type { CreateTransactionRequest } from '../types';
+
+interface ExtractedData {
+
+  description?: string;
+
+  amount?: number;
+
+  type?: 'INCOME' | 'EXPENSE';
+
+  date?: string;
+
+  category?: string;
+
+  confidence: number;
+
+  missingFields: string\[\];
+
+}
+
+export function ChatbotInput() {
+
+  const \[message, setMessage\] \= useState('');
+
+  const \[loading, setLoading\] \= useState(false);
+
+  const \[extracted, setExtracted\] \= useState\<ExtractedData | null\>(null);
+
+  const handleSubmit \= async (e: React.FormEvent) \=\> {
+
+    e.preventDefault();
+
+    setLoading(true);
+
+    try {
+
+      // Chamar API Claude via backend para extrair dados
+
+      const response \= await axios.post('/api/v1/transactions/extract', {
+
+        text: message,
+
+      });
+
+      const data: ExtractedData \= response.data;
+
+      setExtracted(data);
+
+      // Se campos obrigatórios estão presentes, salvar
+
+      if (data.amount && data.type && data.date) {
+
+        await transactionApi.create({
+
+          description: data.description || '',
+
+          amount: data.amount,
+
+          transactionType: data.type,
+
+          transactionDate: data.date,
+
+          categoryId: undefined,
+
+        });
+
+        setMessage('');
+
+        setExtracted(null);
+
+        // Mostrar sucesso
+
+      }
+
+    } catch (error) {
+
+      console.error('Erro ao processar mensagem:', error);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+  return (
+
+    \<div className="chatbot-container"\>
+
+      \<form onSubmit={handleSubmit} className="chatbot-form"\>
+
+        \<input
+
+          type="text"
+
+          value={message}
+
+          onChange={e \=\> setMessage(e.target.value)}
+
+          placeholder="Ex: Gastei 50 reais com comida hoje"
+
+          disabled={loading}
+
+        /\>
+
+        \<button type="submit" disabled={loading}\>
+
+          {loading ? 'Processando...' : 'Enviar'}
+
+        \</button\>
+
+      \</form\>
+
+      {extracted && (
+
+        \<div className="extracted-data"\>
+
+          \<h4\>Informações extraídas:\</h4\>
+
+          \<p\>
+
+            \<strong\>Descrição:\</strong\> {extracted.description || 'Não informado'}
+
+          \</p\>
+
+          \<p\>
+
+            \<strong\>Valor:\</strong\> R$ {extracted.amount}
+
+          \</p\>
+
+          \<p\>
+
+            \<strong\>Tipo:\</strong\>{' '}
+
+            {extracted.type \=== 'INCOME' ? 'Receita' : 'Despesa'}
+
+          \</p\>
+
+          \<p\>
+
+            \<strong\>Data:\</strong\> {extracted.date}
+
+          \</p\>
+
+          {extracted.missingFields.length \> 0 && (
+
+            \<div className="warning"\>
+
+              ⚠️ Campos incompletos: {extracted.missingFields.join(', ')}
+
+            \</div\>
+
+          )}
+
+          \<p className="confidence"\>
+
+            Confiança: {Math.round(extracted.confidence \* 100)}%
+
+          \</p\>
+
+        \</div\>
+
+      )}
+
+    \</div\>
+
+  );
+
+}
+
+---
+
+## REFERÊNCIAS
+
+| Arquivo | Ação |
+| :---- | :---- |
+| `package.json` (raiz) | Editar: remover `workspaces`, atualizar scripts |
+| `frontend/package.json` | Editar: remover tooling duplicado |
+| `.github/workflows/ci.yml` | Substituir integralmente |
+| `mobile/` | Deletar via `git rm -r` |
+| `frontend/package-lock.json` | Regenerar via `npm install` |
+| `package-lock.json` (raiz) | Regenerar via `npm install` |
+
+---
+
+## CONCLUSÃO
+
+Problema → Workspace \+ CI incompatíveis  
+Solução → Remover workspace, 2 lockfiles independentes, atualizar CI  
+Resultado → ✅ Build estável, pronto para mobile em V4
+
+**Tempo estimado:** 30 minutos (implementação) \+ 5 minutos (testes)  

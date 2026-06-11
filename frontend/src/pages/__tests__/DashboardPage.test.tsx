@@ -6,11 +6,9 @@ import { DashboardPage } from '../DashboardPage';
 
 vi.mock('../../services/api', () => ({
   dashboardApi: {
-    getSummary: vi
-      .fn()
-      .mockResolvedValue({
-        data: { totalBalance: 1000, totalIncome: 2000, totalExpenses: 1000, savingsRate: 50 },
-      }),
+    getSummary: vi.fn().mockResolvedValue({
+      data: { totalBalance: 1000, totalIncome: 2000, totalExpenses: 1000, savingsRate: 50 },
+    }),
     getMonthlySummary: vi.fn().mockResolvedValue({ data: [] }),
     getCategorySummary: vi.fn().mockResolvedValue({ data: [] }),
     exportCsv: vi.fn().mockResolvedValue({ data: '' }),
