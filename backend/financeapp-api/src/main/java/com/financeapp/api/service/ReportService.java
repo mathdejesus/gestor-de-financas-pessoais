@@ -1,12 +1,24 @@
 package com.financeapp.api.service;
 
 import com.financeapp.core.dto.*;
+import com.financeapp.core.entity.Transaction;
 import com.financeapp.core.enums.TransactionType;
+import com.financeapp.core.repository.TransactionRepository;
 import com.financeapp.core.service.DashboardService;
 import com.financeapp.core.service.GoalService;
 import com.financeapp.core.service.TransactionService;
-import com.lowagie.text.*;
-import com.lowagie.text.pdf.*;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.Chunk;
+import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfPCell;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,16 +26,101 @@ import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ReportService {
 
+    private final TransactionRepository transactionRepository;
     private final TransactionService transactionService;
     private final DashboardService dashboardService;
     private final GoalService goalService;
+
+    public ReportResponse generateJsonReport(Long userId, LocalDate startDate, LocalDate endDate) {
+        List<Transaction> transactions;
+        if (startDate != null && endDate != null) {
+            transactions = transactionRepository.findByUserIdAndTransactionDateBetweenOrderByTransactionDateDesc(
+                    userId, startDate, endDate);
+        } else {
+            transactions = transactionRepository.findByUserIdOrderByTransactionDateDesc(userId);
+        }
+
+        BigDecimal totalIncome = BigDecimal.ZERO;
+        BigDecimal totalExpense = BigDecimal.ZERO;
+
+        for (Transaction t : transactions) {
+            if (t.getTransactionType() == TransactionType.INCOME) {
+                totalIncome = totalIncome.add(t.getAmount());
+            } else {
+                totalExpense = totalExpense.add(t.getAmount());
+            }
+        }
+
+        ReportResponse report = ReportResponse.builder()
+                .startDate(startDate)
+                .endDate(endDate)
+                .totalIncome(totalIncome)
+                .totalExpense(totalExpense)
+                .balance(totalIncome.subtract(totalExpense))
+                .byCategory(groupByCategory(transactions))
+                .byMonth(groupByMonth(transactions))
+                .build();
+
+        return report;
+    }
+
+    private List<CategoryReportItem> groupByCategory(List<Transaction> transactions) {
+        Map<String, List<Transaction>> grouped = transactions.stream()
+                .collect(Collectors.groupingBy(t -> t.getCategory() != null ? t.getCategory().getName() : "Uncategorized"));
+
+        return grouped.entrySet().stream()
+                .map(entry -> {
+                    String categoryName = entry.getKey();
+                    List<Transaction> items = entry.getValue();
+                    BigDecimal amount = items.stream()
+                            .map(Transaction::getAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    String type = items.get(0).getTransactionType().toString();
+                    return CategoryReportItem.builder()
+                            .categoryName(categoryName)
+                            .amount(amount)
+                            .transactionCount(items.size())
+                            .type(type)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    private List<MonthlyReportItem> groupByMonth(List<Transaction> transactions) {
+        Map<String, List<Transaction>> grouped = transactions.stream()
+                .collect(Collectors.groupingBy(t -> YearMonth.from(t.getTransactionDate()).toString()));
+
+        return grouped.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> {
+                    String month = entry.getKey();
+                    List<Transaction> items = entry.getValue();
+                    BigDecimal income = items.stream()
+                            .filter(t -> t.getTransactionType() == TransactionType.INCOME)
+                            .map(Transaction::getAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal expense = items.stream()
+                            .filter(t -> t.getTransactionType() == TransactionType.EXPENSE)
+                            .map(Transaction::getAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    return MonthlyReportItem.builder()
+                            .month(month)
+                            .income(income)
+                            .expense(expense)
+                            .balance(income.subtract(expense))
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
 
     public byte[] generatePdf(Long userId, LocalDate startDate, LocalDate endDate) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

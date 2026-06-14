@@ -1,1093 +1,1584 @@
-# Diagnóstico e Solução de Erros CI/CD \- Financial Management Platform
+# INSTRUÇÕES PARA NEMOTRON 3 ULTRA
+## Implementação de Funcionalidades Faltantes - Financial Management Platform
 
+**Repositório:** `github.com/mathdejesus/gestor-de-financas-pessoais`  
 **Data:** Junho 2026  
-**Projeto:** Financial Management Platform  
-**Repositório:** [https://github.com/mathdejesus/gestor-de-financas-pessoais](https://github.com/mathdejesus/gestor-de-financas-pessoais)  
-**Status:** Erros identificados em pipeline GitHub Actions (frontend e mobile)
+**Prioridade:** 3 funcionalidades críticas do MVP  
 
 ---
 
-## RESUMO EXECUTIVO
+## 📋 ESCOPO
 
-O projeto tem **3 problemas críticos** no CI/CD:
+Este documento contém instruções para implementar **3 funcionalidades críticas**:
 
-| Problema | Causa | Impacto | Severidade |
-| :---- | :---- | :---- | :---- |
-| Frontend falha em npm ci | `package-lock.json` não existe no diretório `frontend/` | Build quebrado | 🔴 CRÍTICA |
-| Conflito de versões de tooling | `@commitlint/cli`, `lint-staged`, `prettier` duplicados | Instabilidade de deps | 🟠 ALTA |
-| Mobile quebra pipeline | Workspace Expo incompatível \+ projeto é web-only | Falsa complexidade | 🟠 ALTA |
+1. **Página de Relatórios Financeiros** (Backend + Frontend)
+2. **Página de Metas Financeiras** (Backend + Frontend)
+3. **Página de Settings/Perfil** (Frontend)
 
----
-
-## PARTE 1: DIAGNÓSTICO DETALHADO
-
-### 1.1 Problema: Frontend não encontra `package-lock.json`
-
-**O que está acontecendo:**
-
-O arquivo `package.json` da raiz declara:
-
-{
-
-  "workspaces": \[
-
-    "frontend",
-
-    "mobile"
-
-  \]
-
-}
-
-Com npm workspaces, **existe apenas UM arquivo `package-lock.json`** na raiz do projeto.
-
-No `.github/workflows/ci.yml`, o step "Install dependencies" está configurado assim:
-
-test-frontend:
-
-  defaults:
-
-    run:
-
-      working-directory: frontend
-
-  steps:
-
-    \- name: Install dependencies
-
-      run: npm ci
-
-    \# npm ci procura por package-lock.json
-
-    \# Procura em: frontend/package-lock.json (NÃO EXISTE)
-
-**Resultado:** Erro imediato
-
-npm error The \`npm ci\` command can only install with an 
-
-existing package-lock.json or npm-shrinkwrap.json
-
-npm ERR\! code EWORKSPACEMISSING
-
-**Raiz do problema:**
-
-- Workspace requer UM lockfile na raiz  
-- CI tenta usar `npm ci` em subdiretório  
-- Subdiretório não tem seu próprio lockfile  
-- ❌ Incompatibilidade entre modelo de workspace e script de CI
+Cada funcionalidade inclui:
+- Estrutura de arquivos a criar/modificar
+- Código exemplo (copiar/adaptar)
+- Endpoints REST esperados
+- Componentes Preact esperados
+- Testes básicos a escrever
 
 ---
 
-### 1.2 Problema: Conflito de versões de dependências compartilhadas
+## 🎯 ANTES DE COMEÇAR
 
-**O que está acontecendo:**
+**Stack atual:**
+- Frontend: Preact 10.29.1 (NÃO React), TypeScript, Tailwind CSS 4, ky (HTTP client)
+- Backend: Java 21, Spring Boot 3.2.x, PostgreSQL 15+
+- Roteamento Frontend: Hash-based (window.location.hash)
+- Testes Frontend: Vitest + @testing-library/preact
+- Testes Backend: JUnit 5 + Gradle
 
-Arquivo `package.json` (raiz):
-
-"devDependencies": {
-
-  "@commitlint/cli": "^19.3.0",
-
-  "@commitlint/config-conventional": "^19.2.2",
-
-  "husky": "^9.1.7",
-
-  "lint-staged": "^15.2.7",
-
-  "prettier": "^3.8.3"
-
-}
-
-Arquivo `frontend/package.json`:
-
-"devDependencies": {
-
-  "@commitlint/cli": "^21.0.2",      // ← CONFLITA
-
-  "@commitlint/config-conventional": "^21.0.2",  // ← CONFLITA
-
-  "husky": "^9.1.7",
-
-  "lint-staged": "^17.0.7",          // ← CONFLITA
-
-  "prettier": "^3.8.3",
-
-  // ... mais deps do frontend
-
-}
-
-**Resultado:**
-
-- npm resolve ambas, mas com versões diferentes em contextos diferentes  
-- Husky pode procurar versão errada de commitlint  
-- Prettier pode ter comportamento inconsistente  
-- lint-staged não encontra ESLint na versão esperada
-
-**Raiz do problema:**
-
-- Mesma ferramenta de tooling declarada em 2 lugares  
-- Versões incompatíveis (^19 vs ^21, ^15 vs ^17)  
-- npm workspace tenta resolver tudo em um único grafo de dependências  
-- ❌ Duplicação desnecessária causa conflito
+**Padrões do Projeto:**
+- Services usam `ky` para HTTP requests (não Axios)
+- Components são Preact function components (não classe)
+- Backend segue padrão Controller → Service → Repository
+- Todas as requisições são autenticadas com JWT no header `Authorization: Bearer <token>`
+- Banco de dados usa Flyway para migrations (arquivos em `backend/src/main/resources/db/migration/`)
 
 ---
 
-### 1.3 Problema: Mobile (Expo) quebra o pipeline
+# FUNCIONALIDADE 1: RELATÓRIOS FINANCEIROS
 
-**O que está acontecendo:**
+## Backend - Relatórios Financeiros
 
-Arquivo `mobile/package.json` existe e contém:
+### 1.1 Criar Entidade & DTO
 
-{
+**Arquivo:** `backend/src/main/java/com/financeapp/model/dto/ReportResponse.java`
 
-  "dependencies": {
+```java
+package com.financeapp.model.dto;
 
-    "expo": "\~56.0.9",
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 
-    "react-native": "0.85.3",
+public class ReportResponse {
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private BigDecimal totalIncome;
+    private BigDecimal totalExpense;
+    private BigDecimal balance;
+    private List<CategoryReportItem> byCategory;
+    private List<MonthlyReportItem> byMonth;
 
-    "expo-secure-store": "\~56.0.4"
+    // Getters e Setters
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-  },
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
-  "scripts": {
+    public BigDecimal getTotalIncome() { return totalIncome; }
+    public void setTotalIncome(BigDecimal totalIncome) { this.totalIncome = totalIncome; }
 
-    "start": "expo start",
+    public BigDecimal getTotalExpense() { return totalExpense; }
+    public void setTotalExpense(BigDecimal totalExpense) { this.totalExpense = totalExpense; }
 
-    "android": "expo start \--android",
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
 
-    "ios": "expo start \--ios",
+    public List<CategoryReportItem> getByCategory() { return byCategory; }
+    public void setByCategory(List<CategoryReportItem> byCategory) { this.byCategory = byCategory; }
 
-    "web": "expo start \--web"
-
-  }
-
+    public List<MonthlyReportItem> getByMonth() { return byMonth; }
+    public void setByMonth(List<MonthlyReportItem> byMonth) { this.byMonth = byMonth; }
 }
+```
 
-Arquivo `.github/workflows/ci.yml` tenta:
+**Arquivo:** `backend/src/main/java/com/financeapp/model/dto/CategoryReportItem.java`
 
-test-mobile:
+```java
+package com.financeapp.model.dto;
 
-  steps:
+import java.math.BigDecimal;
 
-    \- name: Check TypeScript
+public class CategoryReportItem {
+    private String categoryName;
+    private BigDecimal amount;
+    private Integer transactionCount;
+    private String type; // INCOME ou EXPENSE
 
-      run: npx tsc \--noEmit
-
-      working-directory: mobile
-
-    
-
-    \- name: Check formatting
-
-      run: npx prettier \--check "src/\*\*/\*.{ts,tsx}"
-
-      working-directory: mobile
-
-**Problema 1:** `npx tsc` tenta resolver `expo/tsconfig.base` (do `tsconfig.json`):
-
-{
-
-  "extends": "expo/tsconfig.base"
-
-}
-
-Mas Expo não foi instalado corretamente no workspace.
-
-**Problema 2:** **O requisito do projeto é "exclusivamente web"**
-
-Foco primário é o mobile first
-
-Ele será disponibilizado exclusivamente em navegador web
-
-Expo (React Native) é para apps nativos iOS/Android. **Completamente incompatível** com "navegador web".
-
-**Resultado:**
-
-- CI falha tentando compilar Expo no Ubuntu (sem emulador)  
-- Pasta `mobile/` deveria não existir em projeto web  
-- Pipeline perde tempo processando algo que será deletado  
-- ❌ Decisão arquitetural (web-only) entra em conflito com workspace
-
----
-
-## PARTE 2: SOLUÇÃO COMPLETA
-
-### 2.1 Passo 1: Remover workspace `mobile/`
-
-A pasta `mobile/` deve ser **deletada permanentemente** do repositório, pois:
-
-- Projeto é web-only (requisito confirmado)  
-- Mobile será implementado em V4, com tecnologia diferente  
-- Atualmente causa problemas de CI sem benefício
-
-**Como fazer:**
-
-Opção A: Deletar diretamente (se não há histórico valioso):
-
-git rm \-r mobile/
-
-git commit \-m "chore: remove mobile workspace (web-only project, v4 later)"
-
-git push origin main
-
-Opção B: Arquivar em branch separada (mais seguro):
-
-\# Criar branch de arquivo antes de deletar
-
-git checkout \-b archive/mobile-rn-v0
-
-git push origin archive/mobile-rn-v0
-
-\# Voltar para main e deletar
-
-git checkout main
-
-git rm \-r mobile/
-
-git commit \-m "chore: remove mobile workspace (archived in branch archive/mobile-rn-v0)"
-
-git push origin main
-
-**Depois de deletar, o package.json raiz muda para:**
-
-{
-
-  "name": "financial-management-platform",
-
-  "private": true,
-
-  "scripts": {
-
-    "prepare": "husky",
-
-    "lint": "npm run lint \--prefix frontend",
-
-    "test": "npm run test \--prefix frontend",
-
-    "build": "npm run build \--prefix frontend"
-
-  },
-
-  "devDependencies": {
-
-    "@commitlint/cli": "^19.3.0",
-
-    "@commitlint/config-conventional": "^19.2.2",
-
-    "husky": "^9.1.7",
-
-    "lint-staged": "^15.2.7",
-
-    "prettier": "^3.8.3"
-
-  }
-
-}
-
-**Mudanças importantes:**
-
-- ❌ Remove: `"workspaces": ["frontend", "mobile"]`  
-- ✅ Adiciona: `scripts` com `--prefix frontend` para chamar frontend  
-- ✅ Mantém: tooling compartilhado (Husky, commitlint, prettier)
-
----
-
-### 2.2 Passo 2: Limpar `frontend/package.json`
-
-O frontend deve **gerenciar suas próprias dependências**, não compartilhar tooling com a raiz.
-
-Remove estas linhas de `frontend/devDependencies`:
-
-  "devDependencies": {
-
-\-   "@commitlint/cli": "^21.0.2",
-
-\-   "@commitlint/config-conventional": "^21.0.2",
-
-    "@eslint/js": "^9.0.0",
-
-    "@tailwindcss/vite": "^4.3.0",
-
-    "@testing-library/dom": "^10.4.1",
-
-    "@testing-library/jest-dom": "^6.9.1",
-
-    "@testing-library/react": "^16.3.2",
-
-    "@testing-library/user-event": "^14.6.1",
-
-    "@types/node": "^24.12.3",
-
-    "@types/react": "^19.2.14",
-
-    "@types/react-dom": "^19.2.3",
-
-    "@vitejs/plugin-react": "^6.0.1",
-
-    "@vitest/coverage-v8": "^4.1.8",
-
-    "autoprefixer": "^10.5.0",
-
-    "eslint": "^9.7.0",
-
-    "eslint-config-prettier": "^10.1.8",
-
-    "eslint-plugin-react": "^7.35.0",
-
-    "eslint-plugin-react-hooks": "^5.2.0",
-
-    "eslint-plugin-react-refresh": "^0.5.2",
-
-    "globals": "^17.6.0",
-
-\-   "husky": "^9.1.7",
-
-    "jsdom": "^29.1.1",
-
-\-   "lint-staged": "^17.0.7",
-
-    "postcss": "^8.5.15",
-
-\-   "prettier": "^3.8.3",
-
-    "tailwindcss": "^4.3.0",
-
-    "typescript": "\~6.0.2",
-
-    "typescript-eslint": "^8.59.2",
-
-    "vite": "^8.0.12",
-
-    "vitest": "^4.1.8"
-
-  }
-
-**Por que remover?**
-
-- Raiz já gerencia Husky, commitlint, prettier (centralizados)  
-- Frontend não precisa de suas próprias versões  
-- Evita conflito de versões  
-- Reduz tamanho de `node_modules` do frontend
-
----
-
-### 2.3 Passo 3: Regenerar lockfiles
-
-Depois de alterar `package.json` (raiz) e `frontend/package.json`, **regenere os lockfiles**:
-
-**Na raiz do projeto:**
-
-rm package-lock.json
-
-npm install
-
-**No diretório frontend:**
-
-cd frontend
-
-rm package-lock.json
-
-npm install
-
-cd ..
-
-**Resultado esperado:**
-
-- `package-lock.json` (raiz) — 50-100 linhas, só tooling  
-- `frontend/package-lock.json` — 3000+ linhas, todas as deps do frontend
-
----
-
-### 2.4 Passo 4: Atualizar `.github/workflows/ci.yml`
-
-**Arquivo completo atualizado:**
-
-name: CI/CD Pipeline
-
-on:
-
-  push:
-
-    branches: \[main, develop\]
-
-  pull\_request:
-
-    branches: \[main, develop\]
-
-jobs:
-
-  \# \============================================
-
-  \# JOB 1: Testes Frontend
-
-  \# \============================================
-
-  test-frontend:
-
-    name: Test Frontend
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      \- name: Checkout code
-
-        uses: actions/checkout@v4
-
-      \- name: Setup Node.js
-
-        uses: actions/setup-node@v4
-
-        with:
-
-          node-version: '22'
-
-          cache: 'npm'
-
-          cache-dependency-path: frontend/package-lock.json
-
-      \- name: Install root dependencies (tooling only)
-
-        run: npm ci
-
-      \- name: Install frontend dependencies
-
-        working-directory: frontend
-
-        run: npm ci
-
-      \- name: Run linter
-
-        working-directory: frontend
-
-        run: npm run lint
-
-      \- name: Check formatting
-
-        working-directory: frontend
-
-        run: npm run format:check
-
-      \- name: Run tests
-
-        working-directory: frontend
-
-        run: npm run test \-- \--run
-
-      \- name: Build frontend
-
-        working-directory: frontend
-
-        run: npm run build
-
-      \- name: Upload build artifacts
-
-        if: always()
-
-        uses: actions/upload-artifact@v4
-
-        with:
-
-          name: frontend-build
-
-          path: frontend/dist/
-
-  \# \============================================
-
-  \# JOB 2: Testes Backend
-
-  \# \============================================
-
-  test-backend:
-
-    name: Test Backend
-
-    runs-on: ubuntu-latest
-
-    services:
-
-      postgres:
-
-        image: postgres:15-alpine
-
-        env:
-
-          POSTGRES\_DB: financial\_platform\_test
-
-          POSTGRES\_USER: postgres
-
-          POSTGRES\_PASSWORD: postgres
-
-        ports:
-
-          \- 5432:5432
-
-        options: \>-
-
-          \--health-cmd pg\_isready
-
-          \--health-interval 10s
-
-          \--health-timeout 5s
-
-          \--health-retries 5
-
-    steps:
-
-      \- name: Checkout code
-
-        uses: actions/checkout@v4
-
-      \- name: Setup Java
-
-        uses: actions/setup-java@v4
-
-        with:
-
-          java-version: '21'
-
-          distribution: 'temurin'
-
-          cache: 'maven'
-
-      \- name: Run backend tests
-
-        working-directory: backend
-
-        run: mvn clean verify \-Ptest
-
-        env:
-
-          SPRING\_DATASOURCE\_URL: jdbc:postgresql://localhost:5432/financial\_platform\_test
-
-          SPRING\_DATASOURCE\_USERNAME: postgres
-
-          SPRING\_DATASOURCE\_PASSWORD: postgres
-
-          JWT\_SECRET: dGVzdC1zZWNyZXQta2V5LWZvci1jaS1vbmx5LW5vdC1wcm9kdWN0aW9u
-
-      \- name: Upload coverage reports
-
-        if: always()
-
-        uses: actions/upload-artifact@v4
-
-        with:
-
-          name: backend-coverage
-
-          path: backend/\*\*/target/site/jacoco/
-
-  \# \============================================
-
-  \# JOB 3: Build Docker
-
-  \# \============================================
-
-  build-docker:
-
-    name: Build Docker Images
-
-    runs-on: ubuntu-latest
-
-    needs: \[test-frontend, test-backend\]
-
-    steps:
-
-      \- name: Checkout code
-
-        uses: actions/checkout@v4
-
-      \- name: Build backend Docker image
-
-        run: docker build \-t financeapp-backend:ci ./backend
-
-      \- name: Build frontend Docker image
-
-        run: docker build \-t financeapp-frontend:ci ./frontend
-
-  \# \============================================
-
-  \# JOB 4: Verificação Final
-
-  \# \============================================
-
-  verify:
-
-    name: All Checks Passed
-
-    runs-on: ubuntu-latest
-
-    needs: \[test-frontend, test-backend, build-docker\]
-
-    steps:
-
-      \- name: Final verification
-
-        run: echo "✅ All CI/CD checks passed \- ready to merge"
-
-**Mudanças principais:**
-
-| Antes | Depois | Motivo |
-| :---- | :---- | :---- |
-| `test-mobile` job | ❌ Removido | Mobile app deletado |
-| `defaults.run.working-directory` | ❌ Removido | Usar `working-directory` por step é mais claro |
-| `needs: [test-frontend, test-backend]` | ✅ Adicionado em `build-docker` e `verify` | Garante ordem de execução |
-| Sem install da raiz | ✅ `npm ci` da raiz adicionado | Instala tooling (Husky, commitlint, prettier) |
-| `cache-dependency-path: mobile/package-lock.json` | ❌ Removido | Mobile não existe mais |
-
----
-
-### 2.5 Passo 5: Adicionar hook Git (Husky) para local
-
-O Husky executa commitlint **localmente** antes de fazer push, ajudando a prevenir commits inválidos.
-
-**Verificar se Husky está ativo:**
-
-git log \--oneline \-5
-
-\# Se vir mensagens bem formatadas (feat:, fix:, docs:, etc)
-
-\# Husky está funcionando
-
-**Se não estiver, reinicializar:**
-
-npm run prepare
-
-\# Saída esperada:
-
-\# husky \- Git hooks installed
-
----
-
-## PARTE 3: VALIDAÇÃO DA SOLUÇÃO
-
-### 3.1 Checklist de implementação
-
-- [ ] Deletou `mobile/` via `git rm -r mobile/`  
-- [ ] Atualizou `package.json` (raiz) — removeu `workspaces`, adicionou `scripts`  
-- [ ] Limpou `frontend/package.json` — removeu @commitlint, husky, lint-staged, prettier  
-- [ ] Rodou `npm install` na raiz  
-- [ ] Rodou `cd frontend && npm install`  
-- [ ] Verificou que existem 2 lockfiles: `package-lock.json` e `frontend/package-lock.json`  
-- [ ] Atualizou `.github/workflows/ci.yml` com novo arquivo  
-- [ ] Deletou step `test-mobile`  
-- [ ] Fez push com commit: `chore: fix ci/cd pipeline (remove mobile, fix lockfiles)`
-
-### 3.2 Como testar localmente
-
-**Simular o que GitHub Actions faz:**
-
-\# Simular test-frontend
-
-cd frontend
-
-npm ci  \# Instala exatamente como no CI (não como npm install)
-
-npm run lint
-
-npm run format:check
-
-npm run build
-
-npm run test \-- \--run
-
-\# Simular test-backend
-
-cd ../backend
-
-mvn clean verify \-Ptest
-
-\# Simular build-docker
-
-cd ..
-
-docker build \-t financeapp-frontend:ci ./frontend
-
-docker build \-t financeapp-backend:ci ./backend
-
-**Se todos passarem:** ✅ Pronto para fazer push
-
----
-
-## PARTE 4: PRÓXIMOS PASSOS PÓS-CORREÇÃO
-
-### 4.1 Implementar Tema Solarized
-
-Adicione ao `frontend/src/index.css`:
-
-:root {
-
-  /\* Solarized \- Cor Base \*/
-
-  \--base03: \#002b36;
-
-  \--base02: \#073642;
-
-  \--base01: \#586e75;
-
-  \--base00: \#657b83;
-
-  \--base0: \#839496;
-
-  \--base1: \#93a1a1;
-
-  \--base2: \#eee8d5;
-
-  \--base3: \#fdf6e3;
-
-  /\* Cores Acentuadas \*/
-
-  \--yellow: \#b58900;
-
-  \--orange: \#cb4b16;
-
-  \--red: \#dc322f;
-
-  \--magenta: \#d33682;
-
-  \--violet: \#6c71c4;
-
-  \--blue: \#268bd2;
-
-  \--cyan: \#2aa198;
-
-  \--green: \#859900;
-
-  /\* Modo Claro (padrão) \*/
-
-  \--bg-primary: var(--base3);
-
-  \--bg-secondary: var(--base2);
-
-  \--fg-primary: var(--base00);
-
-  \--fg-secondary: var(--base01);
-
-  \--accent: var(--blue);
-
-  \--border: var(--base2);
-
-}
-
-/\* Modo Escuro \*/
-
-\[data-theme="dark"\] {
-
-  \--bg-primary: var(--base03);
-
-  \--bg-secondary: var(--base02);
-
-  \--fg-primary: var(--base0);
-
-  \--fg-secondary: var(--base1);
-
-  \--accent: var(--cyan);
-
-  \--border: var(--base02);
-
-}
-
-/\* Aplicar variáveis \*/
-
-body {
-
-  background-color: var(--bg-primary);
-
-  color: var(--fg-primary);
-
-  transition: background-color 0.3s, color 0.3s;
-
-}
-
-.card, .panel {
-
-  background-color: var(--bg-secondary);
-
-  border: 1px solid var(--border);
-
-}
-
-button.primary {
-
-  background-color: var(--accent);
-
-  color: var(--bg-primary);
-
-}
-
-/\* Escuro: adicionar ao html \*/
-
-html\[data-theme="dark"\] {
-
-  color-scheme: dark;
-
-}
-
-Componente para trocar tema:
-
-// frontend/src/components/ThemeToggle.tsx
-
-import { useEffect, useState } from 'react';
-
-export function ThemeToggle() {
-
-  const \[theme, setTheme\] \= useState\<'light' | 'dark'\>('light');
-
-  useEffect(() \=\> {
-
-    const saved \= localStorage.getItem('theme') as 'light' | 'dark' | null;
-
-    const preferred \= window.matchMedia('(prefers-color-scheme: dark)').matches
-
-      ? 'dark'
-
-      : 'light';
-
-    const initial \= saved || preferred;
-
-    setTheme(initial);
-
-    document.documentElement.setAttribute('data-theme', initial);
-
-  }, \[\]);
-
-  const toggle \= () \=\> {
-
-    const newTheme \= theme \=== 'light' ? 'dark' : 'light';
-
-    setTheme(newTheme);
-
-    localStorage.setItem('theme', newTheme);
-
-    document.documentElement.setAttribute('data-theme', newTheme);
-
-  };
-
-  return (
-
-    \<button
-
-      onClick={toggle}
-
-      aria-label="Toggle theme"
-
-      className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
-
-    \>
-
-      {theme \=== 'light' ? '🌙' : '☀️'}
-
-    \</button\>
-
-  );
-
-}
-
-### 4.2 Implementar Chatbot de Entrada de Dados
-
-Componente que aceita linguagem natural e extrai campos:
-
-// frontend/src/components/ChatbotInput.tsx
-
-import { useState } from 'react';
-
-import axios from 'axios';
-
-import { transactionApi } from '../services/api';
-
-import type { CreateTransactionRequest } from '../types';
-
-interface ExtractedData {
-
-  description?: string;
-
-  amount?: number;
-
-  type?: 'INCOME' | 'EXPENSE';
-
-  date?: string;
-
-  category?: string;
-
-  confidence: number;
-
-  missingFields: string\[\];
-
-}
-
-export function ChatbotInput() {
-
-  const \[message, setMessage\] \= useState('');
-
-  const \[loading, setLoading\] \= useState(false);
-
-  const \[extracted, setExtracted\] \= useState\<ExtractedData | null\>(null);
-
-  const handleSubmit \= async (e: React.FormEvent) \=\> {
-
-    e.preventDefault();
-
-    setLoading(true);
-
-    try {
-
-      // Chamar API Claude via backend para extrair dados
-
-      const response \= await axios.post('/api/v1/transactions/extract', {
-
-        text: message,
-
-      });
-
-      const data: ExtractedData \= response.data;
-
-      setExtracted(data);
-
-      // Se campos obrigatórios estão presentes, salvar
-
-      if (data.amount && data.type && data.date) {
-
-        await transactionApi.create({
-
-          description: data.description || '',
-
-          amount: data.amount,
-
-          transactionType: data.type,
-
-          transactionDate: data.date,
-
-          categoryId: undefined,
-
-        });
-
-        setMessage('');
-
-        setExtracted(null);
-
-        // Mostrar sucesso
-
-      }
-
-    } catch (error) {
-
-      console.error('Erro ao processar mensagem:', error);
-
-    } finally {
-
-      setLoading(false);
-
+    public CategoryReportItem(String categoryName, BigDecimal amount, Integer transactionCount, String type) {
+        this.categoryName = categoryName;
+        this.amount = amount;
+        this.transactionCount = transactionCount;
+        this.type = type;
     }
 
+    // Getters
+    public String getCategoryName() { return categoryName; }
+    public BigDecimal getAmount() { return amount; }
+    public Integer getTransactionCount() { return transactionCount; }
+    public String getType() { return type; }
+}
+```
+
+**Arquivo:** `backend/src/main/java/com/financeapp/model/dto/MonthlyReportItem.java`
+
+```java
+package com.financeapp.model.dto;
+
+import java.math.BigDecimal;
+
+public class MonthlyReportItem {
+    private String month; // "2026-06"
+    private BigDecimal income;
+    private BigDecimal expense;
+    private BigDecimal balance;
+
+    public MonthlyReportItem(String month, BigDecimal income, BigDecimal expense) {
+        this.month = month;
+        this.income = income;
+        this.expense = expense;
+        this.balance = income.subtract(expense);
+    }
+
+    public String getMonth() { return month; }
+    public BigDecimal getIncome() { return income; }
+    public BigDecimal getExpense() { return expense; }
+    public BigDecimal getBalance() { return balance; }
+}
+```
+
+### 1.2 Criar Service
+
+**Arquivo:** `backend/src/main/java/com/financeapp/service/ReportService.java`
+
+```java
+package com.financeapp.service;
+
+import com.financeapp.model.dto.*;
+import com.financeapp.model.entity.Transaction;
+import com.financeapp.repository.TransactionRepository;
+import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+public class ReportService {
+
+    private final TransactionRepository transactionRepository;
+
+    public ReportService(TransactionRepository transactionRepository) {
+        this.transactionRepository = transactionRepository;
+    }
+
+    public ReportResponse generateReport(String userId, LocalDate startDate, LocalDate endDate) {
+        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionDateBetween(
+            userId, startDate, endDate
+        );
+
+        ReportResponse report = new ReportResponse();
+        report.setStartDate(startDate);
+        report.setEndDate(endDate);
+
+        // Calcular totais por tipo
+        BigDecimal totalIncome = BigDecimal.ZERO;
+        BigDecimal totalExpense = BigDecimal.ZERO;
+
+        for (Transaction t : transactions) {
+            if ("INCOME".equals(t.getTransactionType())) {
+                totalIncome = totalIncome.add(t.getAmount());
+            } else {
+                totalExpense = totalExpense.add(t.getAmount());
+            }
+        }
+
+        report.setTotalIncome(totalIncome);
+        report.setTotalExpense(totalExpense);
+        report.setBalance(totalIncome.subtract(totalExpense));
+
+        // Agrupar por categoria
+        report.setByCategory(groupByCategory(transactions));
+
+        // Agrupar por mês
+        report.setByMonth(groupByMonth(transactions));
+
+        return report;
+    }
+
+    private List<CategoryReportItem> groupByCategory(List<Transaction> transactions) {
+        Map<String, List<Transaction>> grouped = transactions.stream()
+            .collect(Collectors.groupingBy(t -> t.getCategory().getName()));
+
+        return grouped.entrySet().stream()
+            .map(entry -> {
+                String categoryName = entry.getKey();
+                List<Transaction> items = entry.getValue();
+                BigDecimal amount = items.stream()
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                String type = items.get(0).getTransactionType();
+                return new CategoryReportItem(categoryName, amount, items.size(), type);
+            })
+            .collect(Collectors.toList());
+    }
+
+    private List<MonthlyReportItem> groupByMonth(List<Transaction> transactions) {
+        Map<String, List<Transaction>> grouped = transactions.stream()
+            .collect(Collectors.groupingBy(t -> YearMonth.from(t.getTransactionDate()).toString()));
+
+        return grouped.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .map(entry -> {
+                String month = entry.getKey();
+                List<Transaction> items = entry.getValue();
+                BigDecimal income = items.stream()
+                    .filter(t -> "INCOME".equals(t.getTransactionType()))
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal expense = items.stream()
+                    .filter(t -> "EXPENSE".equals(t.getTransactionType()))
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                return new MonthlyReportItem(month, income, expense);
+            })
+            .collect(Collectors.toList());
+    }
+}
+```
+
+**IMPORTANTE:** Adicionar método no `TransactionRepository`:
+
+```java
+List<Transaction> findByUserIdAndTransactionDateBetween(String userId, LocalDate startDate, LocalDate endDate);
+```
+
+### 1.3 Criar Controller
+
+**Arquivo:** `backend/src/main/java/com/financeapp/controller/ReportController.java`
+
+```java
+package com.financeapp.controller;
+
+import com.financeapp.model.dto.ReportResponse;
+import com.financeapp.service.ReportService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate;
+
+@RestController
+@RequestMapping("/api/reports")
+public class ReportController {
+
+    private final ReportService reportService;
+
+    public ReportController(ReportService reportService) {
+        this.reportService = reportService;
+    }
+
+    @GetMapping("/financial")
+    public ResponseEntity<ReportResponse> generateFinancialReport(
+        @RequestParam("startDate") String startDate,
+        @RequestParam("endDate") String endDate,
+        Authentication authentication
+    ) {
+        String userId = authentication.getName();
+        LocalDate start = LocalDate.parse(startDate);
+        LocalDate end = LocalDate.parse(endDate);
+        
+        ReportResponse report = reportService.generateReport(userId, start, end);
+        return ResponseEntity.ok(report);
+    }
+}
+```
+
+---
+
+## Frontend - Página de Relatórios
+
+### 1.4 Criar Hook para Relatórios
+
+**Arquivo:** `frontend/src/hooks/useReports.ts`
+
+```typescript
+import { useState, useCallback } from 'preact/hooks';
+import { api } from '../services/api';
+
+export interface ReportResponse {
+  startDate: string;
+  endDate: string;
+  totalIncome: number;
+  totalExpense: number;
+  balance: number;
+  byCategory: Array<{
+    categoryName: string;
+    amount: number;
+    transactionCount: number;
+    type: string;
+  }>;
+  byMonth: Array<{
+    month: string;
+    income: number;
+    expense: number;
+    balance: number;
+  }>;
+}
+
+export function useReports() {
+  const [report, setReport] = useState<ReportResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const generateReport = useCallback(async (startDate: string, endDate: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api
+        .get(`reports/financial?startDate=${startDate}&endDate=${endDate}`)
+        .json<ReportResponse>();
+      setReport(response);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao gerar relatório');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { report, loading, error, generateReport };
+}
+```
+
+### 1.5 Criar Página de Relatórios
+
+**Arquivo:** `frontend/src/pages/ReportsPage.tsx`
+
+```typescript
+import { h } from 'preact';
+import { useState } from 'preact/hooks';
+import { useReports } from '../hooks/useReports';
+import { format, subMonths } from 'date-fns';
+
+export function ReportsPage() {
+  const { report, loading, error, generateReport } = useReports();
+  const [startDate, setStartDate] = useState(
+    format(subMonths(new Date(), 3), 'yyyy-MM-dd')
+  );
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+
+  const handleGenerateReport = () => {
+    generateReport(startDate, endDate);
   };
 
   return (
+    <div class="min-h-screen bg-gray-50 p-6">
+      <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">Relatórios Financeiros</h1>
 
-    \<div className="chatbot-container"\>
+        {/* Filtros */}
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 class="text-lg font-semibold mb-4">Filtros</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">Data Inicial</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate((e.target as HTMLInputElement).value)}
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">Data Final</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate((e.target as HTMLInputElement).value)}
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div class="flex items-end">
+              <button
+                onClick={handleGenerateReport}
+                disabled={loading}
+                class="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? 'Gerando...' : 'Gerar Relatório'}
+              </button>
+            </div>
+          </div>
+        </div>
 
-      \<form onSubmit={handleSubmit} className="chatbot-form"\>
+        {error && (
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 text-red-700">
+            {error}
+          </div>
+        )}
 
-        \<input
+        {report && (
+          <div class="space-y-8">
+            {/* Resumo */}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="bg-white rounded-lg shadow p-6">
+                <div class="text-sm text-gray-600 mb-2">Receitas</div>
+                <div class="text-2xl font-bold text-green-600">
+                  R$ {report.totalIncome.toFixed(2)}
+                </div>
+              </div>
+              <div class="bg-white rounded-lg shadow p-6">
+                <div class="text-sm text-gray-600 mb-2">Despesas</div>
+                <div class="text-2xl font-bold text-red-600">
+                  R$ {report.totalExpense.toFixed(2)}
+                </div>
+              </div>
+              <div class="bg-white rounded-lg shadow p-6">
+                <div class="text-sm text-gray-600 mb-2">Saldo</div>
+                <div class={`text-2xl font-bold ${report.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  R$ {report.balance.toFixed(2)}
+                </div>
+              </div>
+            </div>
 
-          type="text"
+            {/* Por Categoria */}
+            <div class="bg-white rounded-lg shadow p-6">
+              <h2 class="text-lg font-semibold mb-4">Resumo por Categoria</h2>
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead>
+                    <tr class="border-b">
+                      <th class="text-left py-2">Categoria</th>
+                      <th class="text-left py-2">Tipo</th>
+                      <th class="text-right py-2">Valor</th>
+                      <th class="text-right py-2">Qtd</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.byCategory.map((item) => (
+                      <tr key={item.categoryName} class="border-b hover:bg-gray-50">
+                        <td class="py-3">{item.categoryName}</td>
+                        <td class="py-3">
+                          <span class={`px-2 py-1 rounded text-sm ${
+                            item.type === 'INCOME' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.type === 'INCOME' ? 'Receita' : 'Despesa'}
+                          </span>
+                        </td>
+                        <td class="py-3 text-right">R$ {item.amount.toFixed(2)}</td>
+                        <td class="py-3 text-right">{item.transactionCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-          value={message}
-
-          onChange={e \=\> setMessage(e.target.value)}
-
-          placeholder="Ex: Gastei 50 reais com comida hoje"
-
-          disabled={loading}
-
-        /\>
-
-        \<button type="submit" disabled={loading}\>
-
-          {loading ? 'Processando...' : 'Enviar'}
-
-        \</button\>
-
-      \</form\>
-
-      {extracted && (
-
-        \<div className="extracted-data"\>
-
-          \<h4\>Informações extraídas:\</h4\>
-
-          \<p\>
-
-            \<strong\>Descrição:\</strong\> {extracted.description || 'Não informado'}
-
-          \</p\>
-
-          \<p\>
-
-            \<strong\>Valor:\</strong\> R$ {extracted.amount}
-
-          \</p\>
-
-          \<p\>
-
-            \<strong\>Tipo:\</strong\>{' '}
-
-            {extracted.type \=== 'INCOME' ? 'Receita' : 'Despesa'}
-
-          \</p\>
-
-          \<p\>
-
-            \<strong\>Data:\</strong\> {extracted.date}
-
-          \</p\>
-
-          {extracted.missingFields.length \> 0 && (
-
-            \<div className="warning"\>
-
-              ⚠️ Campos incompletos: {extracted.missingFields.join(', ')}
-
-            \</div\>
-
-          )}
-
-          \<p className="confidence"\>
-
-            Confiança: {Math.round(extracted.confidence \* 100)}%
-
-          \</p\>
-
-        \</div\>
-
-      )}
-
-    \</div\>
-
+            {/* Por Mês */}
+            <div class="bg-white rounded-lg shadow p-6">
+              <h2 class="text-lg font-semibold mb-4">Evolução Mensal</h2>
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead>
+                    <tr class="border-b">
+                      <th class="text-left py-2">Mês</th>
+                      <th class="text-right py-2">Receitas</th>
+                      <th class="text-right py-2">Despesas</th>
+                      <th class="text-right py-2">Saldo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.byMonth.map((item) => (
+                      <tr key={item.month} class="border-b hover:bg-gray-50">
+                        <td class="py-3">{item.month}</td>
+                        <td class="py-3 text-right text-green-600">R$ {item.income.toFixed(2)}</td>
+                        <td class="py-3 text-right text-red-600">R$ {item.expense.toFixed(2)}</td>
+                        <td class={`py-3 text-right font-semibold ${item.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          R$ {item.balance.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
+}
+```
 
+### 1.6 Registrar Rota
+
+**Arquivo:** `frontend/src/router.tsx` - Modificar para adicionar 'reports'
+
+```typescript
+type Route = 'login' | 'dashboard' | 'transactions' | 'settings' | 'reports' | 'not-found';
+
+const routeMap: Record<string, Route> = {
+  '/': 'dashboard',
+  '/login': 'login',
+  '/transactions': 'transactions',
+  '/settings': 'settings',
+  '/reports': 'reports',  // ADICIONAR ESTA LINHA
+};
+
+const pathMap: Record<Route, string> = {
+  login: '/login',
+  dashboard: '/',
+  transactions: '/transactions',
+  settings: '/settings',
+  reports: '/reports',  // ADICIONAR ESTA LINHA
+  'not-found': '/404',
+};
+```
+
+### 1.7 Adicionar Navegação
+
+**Arquivo:** `frontend/src/components/Header.tsx` - Adicionar link para Relatórios
+
+```typescript
+// Dentro do header, adicionar um link:
+<a href="#/reports" class="px-4 py-2 hover:bg-gray-100 rounded">
+  📊 Relatórios
+</a>
+```
+
+---
+
+# FUNCIONALIDADE 2: METAS FINANCEIRAS (FINANCIAL GOALS)
+
+## Backend - Goals (já existem as bases, completar)
+
+### 2.1 Garantir FinancialGoal Entity Completa
+
+**Arquivo:** `backend/src/main/java/com/financeapp/model/entity/FinancialGoal.java`
+
+```java
+package com.financeapp.model.entity;
+
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "financial_goals")
+public class FinancialGoal {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    private String description;
+    private BigDecimal targetValue;
+    private BigDecimal currentValue;
+    private LocalDate targetDate;
+    private String status; // ACTIVE, COMPLETED, ABANDONED
+
+    public FinancialGoal() {}
+
+    // Getters e Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public BigDecimal getTargetValue() { return targetValue; }
+    public void setTargetValue(BigDecimal targetValue) { this.targetValue = targetValue; }
+
+    public BigDecimal getCurrentValue() { return currentValue; }
+    public void setCurrentValue(BigDecimal currentValue) { this.currentValue = currentValue; }
+
+    public LocalDate getTargetDate() { return targetDate; }
+    public void setTargetDate(LocalDate targetDate) { this.targetDate = targetDate; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+}
+```
+
+### 2.2 Adicionar Métodos ao Repository
+
+**Arquivo:** `backend/src/main/java/com/financeapp/repository/FinancialGoalRepository.java`
+
+```java
+package com.financeapp.repository;
+
+import com.financeapp.model.entity.FinancialGoal;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface FinancialGoalRepository extends JpaRepository<FinancialGoal, String> {
+    List<FinancialGoal> findByUserId(String userId);
+    List<FinancialGoal> findByUserIdAndStatus(String userId, String status);
+    Optional<FinancialGoal> findByIdAndUserId(String id, String userId);
+}
+```
+
+### 2.3 Melhorar Service de Goals
+
+**Arquivo:** `backend/src/main/java/com/financeapp/service/FinancialGoalService.java`
+
+```java
+package com.financeapp.service;
+
+import com.financeapp.model.dto.FinancialGoalRequest;
+import com.financeapp.model.dto.FinancialGoalResponse;
+import com.financeapp.model.entity.FinancialGoal;
+import com.financeapp.model.entity.User;
+import com.financeapp.repository.FinancialGoalRepository;
+import com.financeapp.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class FinancialGoalService {
+    private final FinancialGoalRepository goalRepository;
+    private final UserRepository userRepository;
+
+    public FinancialGoalService(FinancialGoalRepository goalRepository, UserRepository userRepository) {
+        this.goalRepository = goalRepository;
+        this.userRepository = userRepository;
+    }
+
+    public FinancialGoalResponse createGoal(String userId, FinancialGoalRequest request) {
+        User user = userRepository.findById(userId).orElseThrow();
+        FinancialGoal goal = new FinancialGoal();
+        goal.setUser(user);
+        goal.setDescription(request.getDescription());
+        goal.setTargetValue(request.getTargetValue());
+        goal.setCurrentValue(BigDecimal.ZERO);
+        goal.setTargetDate(request.getTargetDate());
+        goal.setStatus("ACTIVE");
+        
+        FinancialGoal saved = goalRepository.save(goal);
+        return convertToResponse(saved);
+    }
+
+    public List<FinancialGoalResponse> getUserGoals(String userId) {
+        return goalRepository.findByUserId(userId).stream()
+            .map(this::convertToResponse)
+            .collect(Collectors.toList());
+    }
+
+    public List<FinancialGoalResponse> getActiveGoals(String userId) {
+        return goalRepository.findByUserIdAndStatus(userId, "ACTIVE").stream()
+            .map(this::convertToResponse)
+            .collect(Collectors.toList());
+    }
+
+    public FinancialGoalResponse updateGoal(String userId, String goalId, FinancialGoalRequest request) {
+        FinancialGoal goal = goalRepository.findByIdAndUserId(goalId, userId).orElseThrow();
+        goal.setDescription(request.getDescription());
+        goal.setTargetValue(request.getTargetValue());
+        goal.setTargetDate(request.getTargetDate());
+        
+        FinancialGoal updated = goalRepository.save(goal);
+        return convertToResponse(updated);
+    }
+
+    public FinancialGoalResponse addProgress(String userId, String goalId, BigDecimal amount) {
+        FinancialGoal goal = goalRepository.findByIdAndUserId(goalId, userId).orElseThrow();
+        BigDecimal newValue = goal.getCurrentValue().add(amount);
+        goal.setCurrentValue(newValue);
+        
+        if (newValue.compareTo(goal.getTargetValue()) >= 0) {
+            goal.setStatus("COMPLETED");
+        }
+        
+        FinancialGoal updated = goalRepository.save(goal);
+        return convertToResponse(updated);
+    }
+
+    public void deleteGoal(String userId, String goalId) {
+        FinancialGoal goal = goalRepository.findByIdAndUserId(goalId, userId).orElseThrow();
+        goalRepository.delete(goal);
+    }
+
+    private FinancialGoalResponse convertToResponse(FinancialGoal goal) {
+        FinancialGoalResponse response = new FinancialGoalResponse();
+        response.setId(goal.getId());
+        response.setDescription(goal.getDescription());
+        response.setTargetValue(goal.getTargetValue());
+        response.setCurrentValue(goal.getCurrentValue());
+        response.setTargetDate(goal.getTargetDate());
+        response.setStatus(goal.getStatus());
+        
+        // Calcular progresso
+        if (goal.getTargetValue().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            double progress = goal.getCurrentValue()
+                .divide(goal.getTargetValue(), 2, java.math.RoundingMode.HALF_UP)
+                .doubleValue() * 100;
+            response.setProgress(Math.min(progress, 100.0));
+        }
+        
+        return response;
+    }
+}
+```
+
+### 2.4 Controller (garantir todos os endpoints)
+
+**Arquivo:** `backend/src/main/java/com/financeapp/controller/FinancialGoalController.java`
+
+```java
+package com.financeapp.controller;
+
+import com.financeapp.model.dto.FinancialGoalRequest;
+import com.financeapp.model.dto.FinancialGoalResponse;
+import com.financeapp.service.FinancialGoalService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/goals")
+public class FinancialGoalController {
+    private final FinancialGoalService goalService;
+
+    public FinancialGoalController(FinancialGoalService goalService) {
+        this.goalService = goalService;
+    }
+
+    @PostMapping
+    public ResponseEntity<FinancialGoalResponse> createGoal(
+        @RequestBody FinancialGoalRequest request,
+        Authentication authentication
+    ) {
+        String userId = authentication.getName();
+        FinancialGoalResponse response = goalService.createGoal(userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<FinancialGoalResponse>> getUserGoals(Authentication authentication) {
+        String userId = authentication.getName();
+        return ResponseEntity.ok(goalService.getUserGoals(userId));
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<FinancialGoalResponse>> getActiveGoals(Authentication authentication) {
+        String userId = authentication.getName();
+        return ResponseEntity.ok(goalService.getActiveGoals(userId));
+    }
+
+    @GetMapping("/{goalId}")
+    public ResponseEntity<FinancialGoalResponse> getGoal(
+        @PathVariable String goalId,
+        Authentication authentication
+    ) {
+        // Implementar busca individual se necessário
+        return ResponseEntity.ok(new FinancialGoalResponse());
+    }
+
+    @PutMapping("/{goalId}")
+    public ResponseEntity<FinancialGoalResponse> updateGoal(
+        @PathVariable String goalId,
+        @RequestBody FinancialGoalRequest request,
+        Authentication authentication
+    ) {
+        String userId = authentication.getName();
+        FinancialGoalResponse response = goalService.updateGoal(userId, goalId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{goalId}/progress")
+    public ResponseEntity<FinancialGoalResponse> addProgress(
+        @PathVariable String goalId,
+        @RequestParam BigDecimal amount,
+        Authentication authentication
+    ) {
+        String userId = authentication.getName();
+        FinancialGoalResponse response = goalService.addProgress(userId, goalId, amount);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{goalId}")
+    public ResponseEntity<Void> deleteGoal(
+        @PathVariable String goalId,
+        Authentication authentication
+    ) {
+        String userId = authentication.getName();
+        goalService.deleteGoal(userId, goalId);
+        return ResponseEntity.noContent().build();
+    }
+}
+```
+
+---
+
+## Frontend - Página de Metas
+
+### 2.5 Melhorar Hook useGoals
+
+**Arquivo:** `frontend/src/hooks/useGoals.ts`
+
+```typescript
+import { useState, useCallback } from 'preact/hooks';
+import { api } from '../services/api';
+
+export interface FinancialGoalResponse {
+  id: string;
+  description: string;
+  targetValue: number;
+  currentValue: number;
+  targetDate: string;
+  status: string;
+  progress: number;
 }
 
+export interface FinancialGoalRequest {
+  description: string;
+  targetValue: number;
+  targetDate: string;
+}
+
+export function useGoals() {
+  const [goals, setGoals] = useState<FinancialGoalResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchGoals = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('goals').json<{ content: FinancialGoalResponse[] }>();
+      setGoals(response.content || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar metas');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const createGoal = useCallback(async (data: FinancialGoalRequest) => {
+    try {
+      const newGoal = await api.post('goals', { json: data }).json<FinancialGoalResponse>();
+      setGoals([...goals, newGoal]);
+      return newGoal;
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erro ao criar meta');
+    }
+  }, [goals]);
+
+  const updateGoal = useCallback(async (id: string, data: FinancialGoalRequest) => {
+    try {
+      const updated = await api.put(`goals/${id}`, { json: data }).json<FinancialGoalResponse>();
+      setGoals(goals.map(g => g.id === id ? updated : g));
+      return updated;
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erro ao atualizar meta');
+    }
+  }, [goals]);
+
+  const addProgress = useCallback(async (id: string, amount: number) => {
+    try {
+      const updated = await api
+        .post(`goals/${id}/progress?amount=${amount}`, {})
+        .json<FinancialGoalResponse>();
+      setGoals(goals.map(g => g.id === id ? updated : g));
+      return updated;
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erro ao adicionar progresso');
+    }
+  }, [goals]);
+
+  const deleteGoal = useCallback(async (id: string) => {
+    try {
+      await api.delete(`goals/${id}`);
+      setGoals(goals.filter(g => g.id !== id));
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erro ao deletar meta');
+    }
+  }, [goals]);
+
+  return {
+    goals,
+    loading,
+    error,
+    fetchGoals,
+    createGoal,
+    updateGoal,
+    addProgress,
+    deleteGoal
+  };
+}
+```
+
+### 2.6 Criar Página de Metas
+
+**Arquivo:** `frontend/src/pages/GoalsPage.tsx`
+
+```typescript
+import { h } from 'preact';
+import { useState, useEffect } from 'preact/hooks';
+import { useGoals, FinancialGoalRequest } from '../hooks/useGoals';
+
+export function GoalsPage() {
+  const { goals, loading, error, fetchGoals, createGoal, updateGoal, addProgress, deleteGoal } = useGoals();
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<FinancialGoalRequest>({
+    description: '',
+    targetValue: 0,
+    targetDate: '',
+  });
+  const [progressAmount, setProgressAmount] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetchGoals();
+  }, []);
+
+  const handleSubmit = async (e: Event) => {
+    e.preventDefault();
+    try {
+      if (editingId) {
+        await updateGoal(editingId, formData);
+        setEditingId(null);
+      } else {
+        await createGoal(formData);
+      }
+      setFormData({ description: '', targetValue: 0, targetDate: '' });
+      setShowForm(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao salvar meta');
+    }
+  };
+
+  const handleAddProgress = async (goalId: string) => {
+    const amount = progressAmount[goalId];
+    if (!amount || amount <= 0) {
+      alert('Informe um valor válido');
+      return;
+    }
+    try {
+      await addProgress(goalId, amount);
+      setProgressAmount({ ...progressAmount, [goalId]: 0 });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao adicionar progresso');
+    }
+  };
+
+  const handleDelete = async (goalId: string) => {
+    if (confirm('Tem certeza que deseja deletar esta meta?')) {
+      try {
+        await deleteGoal(goalId);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Erro ao deletar meta');
+      }
+    }
+  };
+
+  const handleEdit = (goalId: string) => {
+    const goal = goals.find(g => g.id === goalId);
+    if (goal) {
+      setFormData({
+        description: goal.description,
+        targetValue: goal.targetValue,
+        targetDate: goal.targetDate,
+      });
+      setEditingId(goalId);
+      setShowForm(true);
+    }
+  };
+
+  return (
+    <div class="min-h-screen bg-gray-50 p-6">
+      <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+          <h1 class="text-3xl font-bold">Metas Financeiras</h1>
+          <button
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditingId(null);
+              setFormData({ description: '', targetValue: 0, targetDate: '' });
+            }}
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            {showForm ? 'Cancelar' : '+ Nova Meta'}
+          </button>
+        </div>
+
+        {/* Formulário */}
+        {showForm && (
+          <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-lg font-semibold mb-4">{editingId ? 'Editar Meta' : 'Criar Nova Meta'}</h2>
+            <form onSubmit={handleSubmit} class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium mb-2">Descrição</label>
+                <input
+                  type="text"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: (e.target as HTMLInputElement).value })}
+                  placeholder="Ex: Fundo de emergência"
+                  class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium mb-2">Valor Alvo (R$)</label>
+                  <input
+                    type="number"
+                    value={formData.targetValue}
+                    onChange={(e) => setFormData({ ...formData, targetValue: parseFloat((e.target as HTMLInputElement).value) })}
+                    placeholder="0.00"
+                    step="0.01"
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">Data Alvo</label>
+                  <input
+                    type="date"
+                    value={formData.targetDate}
+                    onChange={(e) => setFormData({ ...formData, targetDate: (e.target as HTMLInputElement).value })}
+                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                class="w-full px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                {editingId ? 'Atualizar Meta' : 'Criar Meta'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {error && (
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* Lista de Metas */}
+        {loading ? (
+          <div class="text-center py-8">Carregando metas...</div>
+        ) : goals.length === 0 ? (
+          <div class="bg-white rounded-lg shadow p-8 text-center text-gray-600">
+            Nenhuma meta criada. Clique em "+ Nova Meta" para começar!
+          </div>
+        ) : (
+          <div class="space-y-4">
+            {goals.map((goal) => (
+              <div key={goal.id} class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 class="text-lg font-semibold">{goal.description}</h3>
+                    <p class="text-sm text-gray-600">Prazo: {goal.targetDate}</p>
+                  </div>
+                  <span class={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    goal.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 
+                    goal.status === 'ACTIVE' ? 'bg-blue-100 text-blue-800' : 
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {goal.status === 'COMPLETED' ? '✓ Completa' : 
+                     goal.status === 'ACTIVE' ? 'Em andamento' : 
+                     'Cancelada'}
+                  </span>
+                </div>
+
+                {/* Barra de Progresso */}
+                <div class="mb-4">
+                  <div class="flex justify-between mb-2">
+                    <span class="text-sm font-medium">Progresso</span>
+                    <span class="text-sm font-medium">{goal.progress.toFixed(1)}%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      class="bg-blue-600 h-2 rounded-full"
+                      style={{ width: `${Math.min(goal.progress, 100)}%` }}
+                    ></div>
+                  </div>
+                  <div class="flex justify-between mt-2 text-sm text-gray-600">
+                    <span>R$ {goal.currentValue.toFixed(2)}</span>
+                    <span>R$ {goal.targetValue.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Adicionar Progresso */}
+                {goal.status === 'ACTIVE' && (
+                  <div class="flex gap-2 mb-4">
+                    <input
+                      type="number"
+                      value={progressAmount[goal.id] || 0}
+                      onChange={(e) => setProgressAmount({ ...progressAmount, [goal.id]: parseFloat((e.target as HTMLInputElement).value) })}
+                      placeholder="Valor a adicionar"
+                      step="0.01"
+                      class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={() => handleAddProgress(goal.id)}
+                      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                      + Adicionar
+                    </button>
+                  </div>
+                )}
+
+                {/* Ações */}
+                <div class="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(goal.id)}
+                    disabled={goal.status !== 'ACTIVE'}
+                    class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleDelete(goal.id)}
+                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  >
+                    Deletar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+### 2.7 Registrar Rota para Goals
+
+**Arquivo:** `frontend/src/router.tsx`
+
+```typescript
+type Route = 'login' | 'dashboard' | 'transactions' | 'settings' | 'reports' | 'goals' | 'not-found';
+
+const routeMap: Record<string, Route> = {
+  '/': 'dashboard',
+  '/login': 'login',
+  '/transactions': 'transactions',
+  '/settings': 'settings',
+  '/reports': 'reports',
+  '/goals': 'goals',  // ADICIONAR ESTA LINHA
+};
+
+const pathMap: Record<Route, string> = {
+  login: '/login',
+  dashboard: '/',
+  transactions: '/transactions',
+  settings: '/settings',
+  reports: '/reports',
+  goals: '/goals',  // ADICIONAR ESTA LINHA
+  'not-found': '/404',
+};
+```
+
 ---
 
-## REFERÊNCIAS
+# FUNCIONALIDADE 3: PÁGINA DE SETTINGS/PERFIL
 
-| Arquivo | Ação |
-| :---- | :---- |
-| `package.json` (raiz) | Editar: remover `workspaces`, atualizar scripts |
-| `frontend/package.json` | Editar: remover tooling duplicado |
-| `.github/workflows/ci.yml` | Substituir integralmente |
-| `mobile/` | Deletar via `git rm -r` |
-| `frontend/package-lock.json` | Regenerar via `npm install` |
-| `package-lock.json` (raiz) | Regenerar via `npm install` |
+## Frontend - Settings Page (sem backend novo necessário, usar endpoints existentes)
+
+### 3.1 Criar Página de Settings
+
+**Arquivo:** `frontend/src/pages/SettingsPage.tsx`
+
+```typescript
+import { h } from 'preact';
+import { useState, useEffect } from 'preact/hooks';
+import { useNavigation } from '../router';
+import { api } from '../services/api';
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export function SettingsPage() {
+  const { navigate } = useNavigation();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '' });
+
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      setLoading(true);
+      // Endpoint para obter perfil do usuário (implementar no backend se não existir)
+      const profile = await api.get('auth/profile').json<UserProfile>();
+      setUser(profile);
+      setFormData({ name: profile.name, email: profile.email });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar perfil');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async (e: Event) => {
+    e.preventDefault();
+    try {
+      // Endpoint para atualizar perfil (implementar no backend se necessário)
+      const updated = await api
+        .put('auth/profile', { json: formData })
+        .json<UserProfile>();
+      setUser(updated);
+      setEditing(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao atualizar perfil');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('login');
+  };
+
+  const handleChangePassword = async (e: Event) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const currentPassword = (form.querySelector('[name="currentPassword"]') as HTMLInputElement).value;
+    const newPassword = (form.querySelector('[name="newPassword"]') as HTMLInputElement).value;
+    const confirmPassword = (form.querySelector('[name="confirmPassword"]') as HTMLInputElement).value;
+
+    if (newPassword !== confirmPassword) {
+      alert('As senhas não coincidem');
+      return;
+    }
+
+    try {
+      // Endpoint para mudar senha (implementar no backend)
+      await api.post('auth/change-password', {
+        json: { currentPassword, newPassword }
+      });
+      alert('Senha alterada com sucesso!');
+      form.reset();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao alterar senha');
+    }
+  };
+
+  if (loading) {
+    return <div class="min-h-screen bg-gray-50 p-6 flex items-center justify-center">Carregando...</div>;
+  }
+
+  return (
+    <div class="min-h-screen bg-gray-50 p-6">
+      <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">Configurações</h1>
+
+        {error && (
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* Seção de Perfil */}
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-semibold">Perfil</h2>
+            <button
+              onClick={() => setEditing(!editing)}
+              class="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+            >
+              {editing ? 'Cancelar' : 'Editar'}
+            </button>
+          </div>
+
+          {!editing && user ? (
+            <div class="space-y-4">
+              <div>
+                <label class="text-sm text-gray-600">Nome</label>
+                <p class="text-lg font-medium">{user.name}</p>
+              </div>
+              <div>
+                <label class="text-sm text-gray-600">Email</label>
+                <p class="text-lg font-medium">{user.email}</p>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSaveProfile} class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium mb-2">Nome</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
+                  class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: (e.target as HTMLInputElement).value })}
+                  class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                class="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Salvar Alterações
+              </button>
+            </form>
+          )}
+        </div>
+
+        {/* Seção de Segurança */}
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 class="text-lg font-semibold mb-6">Segurança</h2>
+          <form onSubmit={handleChangePassword} class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">Senha Atual</label>
+              <input
+                type="password"
+                name="currentPassword"
+                placeholder="Digite sua senha atual"
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">Nova Senha</label>
+              <input
+                type="password"
+                name="newPassword"
+                placeholder="Digite sua nova senha"
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">Confirmar Nova Senha</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirme a nova senha"
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              class="w-full px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+            >
+              Alterar Senha
+            </button>
+          </form>
+        </div>
+
+        {/* Seção de Preferências */}
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 class="text-lg font-semibold mb-6">Preferências</h2>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <p class="font-medium">Notificações</p>
+                <p class="text-sm text-gray-600">Receber alertas sobre metas e despesas</p>
+              </div>
+              <input type="checkbox" class="w-4 h-4" defaultChecked />
+            </div>
+            <div class="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <p class="font-medium">Relatórios Mensais</p>
+                <p class="text-sm text-gray-600">Receber resumo mensal por email</p>
+              </div>
+              <input type="checkbox" class="w-4 h-4" defaultChecked />
+            </div>
+          </div>
+        </div>
+
+        {/* Seção de Logout */}
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-lg font-semibold mb-4">Sessão</h2>
+          <button
+            onClick={handleLogout}
+            class="w-full px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Sair da Conta
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+### 3.2 Registrar Settings na App
+
+**Arquivo:** `frontend/src/app.tsx` - Adicionar import e rota
+
+```typescript
+import { SettingsPage } from './pages/SettingsPage';
+// ... em renderPage():
+case 'settings':
+  return <SettingsPage />;
+```
 
 ---
 
-## CONCLUSÃO
+# TESTES
 
-Problema → Workspace \+ CI incompatíveis  
-Solução → Remover workspace, 2 lockfiles independentes, atualizar CI  
-Resultado → ✅ Build estável, pronto para mobile em V4
+## Backend - Testes para Relatórios
 
-**Tempo estimado:** 30 minutos (implementação) \+ 5 minutos (testes)  
+**Arquivo:** `backend/src/test/java/com/financeapp/service/ReportServiceTests.java`
+
+```java
+package com.financeapp.service;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ReportServiceTests {
+    
+    private ReportService reportService;
+    
+    @BeforeEach
+    public void setUp() {
+        // Inicializar mocks e service
+    }
+    
+    @Test
+    public void shouldGenerateReportForDateRange() {
+        // Teste básico de geração de relatório
+    }
+    
+    @Test
+    public void shouldCalculateTotalIncomeCorrectly() {
+        // Teste de cálculo de receitas
+    }
+    
+    @Test
+    public void shouldCalculateTotalExpenseCorrectly() {
+        // Teste de cálculo de despesas
+    }
+}
+```
+
+## Frontend - Testes para ReportsPage
+
+**Arquivo:** `frontend/src/pages/ReportsPage.test.tsx`
+
+```typescript
+import { render, screen } from '@testing-library/preact';
+import { describe, it, expect } from 'vitest';
+import { ReportsPage } from './ReportsPage';
+
+describe('ReportsPage', () => {
+  it('should render the reports page', () => {
+    render(<ReportsPage />);
+    expect(screen.getByText('Relatórios Financeiros')).toBeInTheDocument();
+  });
+  
+  it('should have date filters', () => {
+    render(<ReportsPage />);
+    expect(screen.getByLabelText('Data Inicial')).toBeInTheDocument();
+    expect(screen.getByLabelText('Data Final')).toBeInTheDocument();
+  });
+});
+```
+
+---
+
+# MIGRATIONS DE BANCO DE DADOS
+
+## Verificar se migration existe para Goals
+
+**Arquivo:** `backend/src/main/resources/db/migration/V4__create_financial_goals.sql`
+
+Verificar se contém a coluna `target_date` e `status`. Se não, criar migration V5:
+
+```sql
+-- V5__add_missing_columns_to_goals.sql
+ALTER TABLE financial_goals
+ADD COLUMN IF NOT EXISTS target_date DATE,
+ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE';
+```
+
+---
+
+# CHECKLIST DE IMPLEMENTAÇÃO
+
+## ✅ Backend
+
+- [ ] Criar DTOs de Relatórios (ReportResponse, CategoryReportItem, MonthlyReportItem)
+- [ ] Criar ReportService com métodos de geração
+- [ ] Criar ReportController com endpoint GET /api/reports/financial
+- [ ] Adicionar método findByUserIdAndTransactionDateBetween no TransactionRepository
+- [ ] Validar FinancialGoal entity está completa
+- [ ] Validar FinancialGoalService tem todos os métodos
+- [ ] Validar FinancialGoalController tem todos os endpoints
+- [ ] Garantir migrations de banco OK
+
+## ✅ Frontend
+
+- [ ] Criar hook useReports
+- [ ] Criar ReportsPage
+- [ ] Registrar rota '/reports' no router
+- [ ] Adicionar link Relatórios no Header
+- [ ] Melhorar hook useGoals com todos os métodos
+- [ ] Criar GoalsPage
+- [ ] Registrar rota '/goals' no router
+- [ ] Criar SettingsPage
+- [ ] Registrar rota '/settings' no router
+- [ ] Adicionar import de SettingsPage em app.tsx
+- [ ] Testar navegação entre todas as páginas
+
+## ✅ Testes
+
+- [ ] Criar testes para ReportService
+- [ ] Criar testes para ReportController
+- [ ] Criar testes para ReportsPage
+- [ ] Criar testes para GoalsPage
+- [ ] Executar npm run test:coverage (frontend)
+- [ ] Executar ./gradlew test (backend)
+
+## ✅ CI/CD
+
+- [ ] Fazer commit com mensagem clara (feat: implement reports, goals, and settings)
+- [ ] Push para branch feature
+- [ ] Abrir Pull Request
+- [ ] Verificar se CI/CD passa
+- [ ] Fazer merge para main
+
+---
+
+# NOTAS IMPORTANTES
+
+1. **Preact vs React:** O projeto usa Preact, não React. Os exemplos usam sintaxe Preact.
+2. **HTTP Client:** Use `ky` ao invés de Axios. Exemplo: `api.get('url').json<Type>()`
+3. **Roteamento:** É hash-based (`#/pagina`), não tradicional.
+4. **Autenticação:** JWT token é enviado automaticamente pelo interceptor do serviço `api`.
+5. **Tailwind CSS:** Disponível globalmente, use classes direto.
+6. **Date handling:** Use `date-fns` para manipulação de datas.
+
+---
+
+**Fim das Instruções**
+
+Este documento contém todo o código necessário para o Nemotron implementar as 3 funcionalidades críticas.

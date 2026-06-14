@@ -32,6 +32,13 @@ export function useGoals() {
     return data;
   };
 
+  const addProgress = async (id: number, amount: number) => {
+    const goal = goals.find(g => g.id === id);
+    if (!goal) throw new Error('Goal not found');
+    const newCurrentValue = goal.currentValue + amount;
+    return updateGoal(id, { currentValue: newCurrentValue });
+  };
+
   const deleteGoal = async (id: number) => {
     await goalApi.delete(id);
     setGoals(prev => prev.filter(g => g.id !== id));
@@ -48,6 +55,7 @@ export function useGoals() {
     fetchGoals,
     createGoal,
     updateGoal,
+    addProgress,
     deleteGoal,
   };
 }

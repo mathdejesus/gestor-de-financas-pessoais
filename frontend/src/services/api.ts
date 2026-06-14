@@ -15,6 +15,10 @@ import type {
   FinancialGoal,
   CreateGoalRequest,
   UpdateGoalRequest,
+  ReportResponse,
+  UserProfile,
+  UpdateProfileRequest,
+  ChangePasswordRequest,
 } from '../types';
 
 const api = axios.create({
@@ -100,6 +104,9 @@ export const authApi = {
   login: (data: LoginRequest) => api.post<AuthResponse>('/auth/login', data),
   register: (data: RegisterRequest) => api.post<AuthResponse>('/auth/register', data),
   refreshToken: (refreshToken: string) => api.post<AuthResponse>('/auth/refresh', { refreshToken }),
+  getProfile: () => api.get<UserProfile>('/auth/profile'),
+  updateProfile: (data: UpdateProfileRequest) => api.put<UserProfile>('/auth/profile', data),
+  changePassword: (data: ChangePasswordRequest) => api.post('/auth/change-password', data),
 };
 
 export const transactionApi = {
@@ -143,6 +150,8 @@ export const goalApi = {
 export const reportApi = {
   generatePdf: (params?: { startDate?: string; endDate?: string }) =>
     api.get('/reports/pdf', { params, responseType: 'blob' }),
+  generateFinancialReport: (params?: { startDate?: string; endDate?: string }) =>
+    api.get<ReportResponse>('/reports/financial', { params }),
 };
 
 export default api;

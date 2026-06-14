@@ -8,7 +8,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import com.financeapp.core.entity.User;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -34,5 +37,26 @@ public class AuthController {
     @Operation(summary = "Refresh token", description = "Get new access token using refresh token")
     public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(authService.refreshToken(request));
+    }
+
+    @GetMapping("/profile")
+    @Operation(summary = "Get user profile", description = "Get authenticated user's profile information")
+    public ResponseEntity<UserDTO> getProfile(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(authService.getProfile(user.getId()));
+    }
+
+    @PutMapping("/profile")
+    @Operation(summary = "Update user profile", description = "Update authenticated user's name and email")
+    public ResponseEntity<UserDTO> updateProfile(@AuthenticationPrincipal User user,
+                                                  @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(authService.updateProfile(user.getId(), request));
+    }
+
+    @PostMapping("/change-password")
+    @Operation(summary = "Change password", description = "Change authenticated user's password")
+    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal User user,
+                                                @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(user.getId(), request);
+        return ResponseEntity.ok().build();
     }
 }

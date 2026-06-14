@@ -10,6 +10,8 @@ export function Layout() {
     { path: '/transactions', label: 'Transactions' },
     { path: '/categories', label: 'Categories' },
     { path: '/goals', label: 'Goals' },
+    { path: '/reports', label: 'Reports' },
+    { path: '/settings', label: 'Settings' },
   ];
 
   return (

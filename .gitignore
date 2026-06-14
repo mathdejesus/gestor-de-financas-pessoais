@@ -56,4 +56,4 @@ target/
 *.class
 *.ser
 hs_err_pid*
-replay_pid*
+replay_pid*git.txt

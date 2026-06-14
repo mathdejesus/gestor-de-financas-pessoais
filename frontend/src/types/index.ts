@@ -134,3 +134,44 @@ export interface UpdateGoalRequest {
   deadline?: string | null;
   status?: 'ACTIVE' | 'COMPLETED' | 'ABANDONED';
 }
+
+export interface CategoryReportItem {
+  categoryName: string;
+  amount: number;
+  transactionCount: number;
+  type: string;
+}
+
+export interface MonthlyReportItem {
+  month: string;
+  income: number;
+  expense: number;
+  balance: number;
+}
+
+export interface ReportResponse {
+  startDate: string | null;
+  endDate: string | null;
+  totalIncome: number;
+  totalExpense: number;
+  balance: number;
+  byCategory: CategoryReportItem[];
+  byMonth: MonthlyReportItem[];
+}
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: string;
+}
+
+export interface UpdateProfileRequest {
+  name: string;
+  email: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}

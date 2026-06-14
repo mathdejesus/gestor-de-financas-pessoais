@@ -1,6 +1,7 @@
 package com.financeapp.api.controller;
 
 import com.financeapp.api.service.ReportService;
+import com.financeapp.core.dto.ReportResponse;
 import com.financeapp.core.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,10 +19,21 @@ import java.time.format.DateTimeFormatter;
 @RestController
 @RequestMapping("/api/v1/reports")
 @RequiredArgsConstructor
-@Tag(name = "Reports", description = "PDF report generation")
+@Tag(name = "Reports", description = "Financial reports and PDF generation")
 public class ReportController {
 
     private final ReportService reportService;
+
+    @GetMapping("/financial")
+    @Operation(summary = "Generate financial report", description = "Generate a financial report in JSON format with income, expenses, balances by category and month")
+    public ResponseEntity<ReportResponse> generateFinancialReport(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        ReportResponse report = reportService.generateJsonReport(user.getId(), startDate, endDate);
+        return ResponseEntity.ok(report);
+    }
 
     @GetMapping("/pdf")
     @Operation(summary = "Generate PDF report", description = "Generate a financial report in PDF format")
