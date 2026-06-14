@@ -1,49 +1,68 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '../types';
-import { categoryApi } from '../services/api';
+import { useState, useCallback } from "preact/hooks";
+import { api } from "../services/api";
+import type { CategoryResponse, CategoryRequest } from "../types";
 
-export function useCategories() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface UseCategoriesReturn {
+  categories: CategoryResponse[];
+  loading: boolean;
+  error: string | null;
+  fetchCategories: () => Promise<void>;
+  createCategory: (data: CategoryRequest) => Promise<CategoryResponse>;
+  updateCategory: (
+    id: string,
+    data: CategoryRequest,
+  ) => Promise<CategoryResponse>;
+  deleteCategory: (id: string) => Promise<void>;
+}
+
+export function useCategories(): UseCategoriesReturn {
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCategories = useCallback(async () => {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
     try {
-      const { data } = await categoryApi.getAll();
-      setCategories(data);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch categories');
+      const response = await api
+        .get("categories?size=100")
+        .json<{ content: CategoryResponse[] }>();
+      setCategories(response.content);
+    } catch (err) {
+      setError("Erro ao carregar categorias");
+      console.error(err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, []);
 
-  const createCategory = async (request: CreateCategoryRequest) => {
-    const { data } = await categoryApi.create(request);
-    setCategories(prev => [...prev, data]);
-    return data;
-  };
+  const createCategory = useCallback(async (data: CategoryRequest) => {
+    const response = await api
+      .post("categories", { json: data })
+      .json<CategoryResponse>();
+    setCategories((prev) => [...prev, response]);
+    return response;
+  }, []);
 
-  const updateCategory = async (id: number, request: UpdateCategoryRequest) => {
-    const { data } = await categoryApi.update(id, request);
-    setCategories(prev => prev.map(c => (c.id === id ? data : c)));
-    return data;
-  };
+  const updateCategory = useCallback(
+    async (id: string, data: CategoryRequest) => {
+      const response = await api
+        .put(`categories/${id}`, { json: data })
+        .json<CategoryResponse>();
+      setCategories((prev) => prev.map((c) => (c.id === id ? response : c)));
+      return response;
+    },
+    [],
+  );
 
-  const deleteCategory = async (id: number) => {
-    await categoryApi.delete(id);
-    setCategories(prev => prev.filter(c => c.id !== id));
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+  const deleteCategory = useCallback(async (id: string) => {
+    await api.delete(`categories/${id}`);
+    setCategories((prev) => prev.filter((c) => c.id !== id));
+  }, []);
 
   return {
     categories,
-    isLoading,
+    loading,
     error,
     fetchCategories,
     createCategory,

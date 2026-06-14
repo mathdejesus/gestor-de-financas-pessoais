@@ -1,123 +1,155 @@
-import { useState, useEffect, useCallback } from 'react';
-import { dashboardApi, reportApi } from '../services/api';
-import { PeriodFilter, getPeriodDates } from '../components/PeriodFilter';
-import { KPICards } from '../components/KPICards';
-import { MonthlyChart, CategoryChart } from '../components/Charts';
-import type { DashboardSummary, MonthlySummary, CategorySummary, PeriodType } from '../types';
+import { useState, useEffect } from "preact/hooks";
+import { useAuth } from "../hooks/useAuth";
+import { useTransactions } from "../hooks/useTransactions";
+import { formatCurrency } from "../utils/currency";
+import ChatbotPanel from "../components/ChatbotPanel";
+import type { DashboardResponse, AiExtractResponse } from "../types";
 
-export function DashboardPage() {
-  const [period, setPeriod] = useState<PeriodType>('month');
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [monthly, setMonthly] = useState<MonthlySummary[]>([]);
-  const [categories, setCategories] = useState<CategorySummary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async (periodType: PeriodType) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { startDate, endDate } = getPeriodDates(periodType);
-      const params = startDate && endDate ? { startDate, endDate } : undefined;
-
-      const [summaryRes, monthlyRes, categoryRes] = await Promise.all([
-        dashboardApi.getSummary(params),
-        dashboardApi.getMonthlySummary(
-          periodType === 'month' ? 6 : periodType === 'quarter' ? 12 : 24
-        ),
-        dashboardApi.getCategorySummary(params),
-      ]);
-
-      setSummary(summaryRes.data);
-      setMonthly(monthlyRes.data);
-      setCategories(categoryRes.data);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load dashboard');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+export default function DashboardPage() {
+  const { user } = useAuth();
+  const { fetchSummary, fetchByCategory } = useTransactions();
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showChatbot, setShowChatbot] = useState(false);
 
   useEffect(() => {
-    fetchData(period);
-  }, [period, fetchData]);
+    loadDashboard();
+  }, []);
 
-  const handleExportCsv = async () => {
+  const loadDashboard = async () => {
+    setLoading(true);
     try {
-      const { startDate, endDate } = getPeriodDates(period);
-      const params = startDate && endDate ? { startDate, endDate } : undefined;
-      const response = await dashboardApi.exportCsv(params);
+      // Fetch summary
+      const summary = await fetchSummary();
 
-      const blob = new Blob([response.data], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'transactions.csv';
-      link.click();
-      window.URL.revokeObjectURL(url);
-    } catch {
-      alert('Failed to export CSV');
+      // Fetch by category
+      const [expenseByCategory, incomeByCategory] = await Promise.all([
+        fetchByCategory("EXPENSE"),
+        fetchByCategory("INCOME"),
+      ]);
+
+      setDashboard({
+        totalIncome: 0,
+        totalExpense: 0,
+        balance: 0,
+        recentTransactions: [],
+        categoriesBreakdown: {},
+        incomeByCategory: Object.fromEntries(
+          incomeByCategory.map((item: any) => [item.category, item.amount]),
+        ),
+        expenseByCategory: Object.fromEntries(
+          expenseByCategory.map((item: any) => [item.category, item.amount]),
+        ),
+        incomeCurrentMonth: summary.income,
+        expenseCurrentMonth: summary.expense,
+        balanceCurrentMonth: summary.balance,
+      });
+    } catch (err) {
+      console.error("Erro ao carregar dashboard:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleExportPdf = async () => {
-    try {
-      const { startDate, endDate } = getPeriodDates(period);
-      const params = startDate && endDate ? { startDate, endDate } : undefined;
-      const response = await reportApi.generatePdf(params);
-
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'financial-report.pdf';
-      link.click();
-      window.URL.revokeObjectURL(url);
-    } catch {
-      alert('Failed to generate PDF report');
-    }
+  const handleTransactionExtracted = (data: AiExtractResponse) => {
+    console.log("Transaction extracted:", data);
+    setShowChatbot(false);
+    loadDashboard();
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading dashboard...</div>
-      </div>
-    );
+  if (loading) {
+    return <div class="loading">Carregando dashboard...</div>;
   }
 
+  const balanceColor =
+    dashboard && dashboard.balanceCurrentMonth >= 0
+      ? "var(--color-success)"
+      : "var(--color-danger)";
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <div className="flex items-center gap-4">
-          <PeriodFilter selected={period} onSelect={setPeriod} />
-          <button
-            onClick={handleExportCsv}
-            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
-          >
-            Export CSV
-          </button>
-          <button
-            onClick={handleExportPdf}
-            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
-          >
-            Export PDF
-          </button>
+    <div class="dashboard-page">
+      <div class="dashboard-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Olá, {user?.name}! Veja seu resumo financeiro.</p>
+        </div>
+        <button class="btn btn-primary" onClick={() => setShowChatbot(true)}>
+          ➕ Nova Transação
+        </button>
+      </div>
+
+      <div class="dashboard-cards">
+        <div class="card stat-card">
+          <div class="stat-icon income">💰</div>
+          <div class="stat-info">
+            <span class="stat-label">Receitas do Mês</span>
+            <span class="stat-value income">
+              {formatCurrency(dashboard?.incomeCurrentMonth || 0)}
+            </span>
+          </div>
+        </div>
+
+        <div class="card stat-card">
+          <div class="stat-icon expense">💸</div>
+          <div class="stat-info">
+            <span class="stat-label">Despesas do Mês</span>
+            <span class="stat-value expense">
+              {formatCurrency(dashboard?.expenseCurrentMonth || 0)}
+            </span>
+          </div>
+        </div>
+
+        <div class="card stat-card">
+          <div class="stat-icon" style={{ color: balanceColor }}>
+            📊
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Saldo do Mês</span>
+            <span class="stat-value" style={{ color: balanceColor }}>
+              {formatCurrency(dashboard?.balanceCurrentMonth || 0)}
+            </span>
+          </div>
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
+      <div class="dashboard-grid">
+        <div class="card">
+          <h2>💸 Despesas por Categoria</h2>
+          {dashboard?.expenseByCategory &&
+          Object.keys(dashboard.expenseByCategory).length > 0 ? (
+            <ul class="category-list">
+              {Object.entries(dashboard.expenseByCategory).map(
+                ([category, amount]) => (
+                  <li key={category} class="category-item">
+                    <span>{category}</span>
+                    <span class="amount expense">{formatCurrency(amount)}</span>
+                  </li>
+                ),
+              )}
+            </ul>
+          ) : (
+            <p class="empty">Nenhuma despesa este mês</p>
+          )}
         </div>
-      )}
 
-      {summary && <KPICards summary={summary} />}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MonthlyChart data={monthly} />
-        <CategoryChart data={categories} />
+        <div class="card">
+          <h2>💰 Receitas por Categoria</h2>
+          {dashboard?.incomeByCategory &&
+          Object.keys(dashboard.incomeByCategory).length > 0 ? (
+            <ul class="category-list">
+              {Object.entries(dashboard.incomeByCategory).map(
+                ([category, amount]) => (
+                  <li key={category} class="category-item">
+                    <span>{category}</span>
+                    <span class="amount income">{formatCurrency(amount)}</span>
+                  </li>
+                ),
+              )}
+            </ul>
+          ) : (
+            <p class="empty">Nenhuma receita este mês</p>
+          )}
+        </div>
       </div>
     </div>
   );

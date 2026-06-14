@@ -1,61 +1,118 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { FinancialGoal, CreateGoalRequest, UpdateGoalRequest } from '../types';
-import { goalApi } from '../services/api';
+import { useState, useCallback } from "preact/hooks";
+import { api } from "../services/api";
+import type { FinancialGoalResponse, FinancialGoalRequest } from "../types";
 
-export function useGoals() {
-  const [goals, setGoals] = useState<FinancialGoal[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface UseGoalsReturn {
+  goals: FinancialGoalResponse[];
+  loading: boolean;
+  error: string | null;
+  fetchGoals: () => Promise<void>;
+  fetchActiveGoals: () => Promise<void>;
+  fetchExpiredGoals: () => Promise<void>;
+  createGoal: (data: FinancialGoalRequest) => Promise<FinancialGoalResponse>;
+  updateGoal: (
+    id: string,
+    data: FinancialGoalRequest,
+  ) => Promise<FinancialGoalResponse>;
+  deleteGoal: (id: string) => Promise<void>;
+  addProgress: (id: string, amount: number) => Promise<FinancialGoalResponse>;
+}
+
+export function useGoals(): UseGoalsReturn {
+  const [goals, setGoals] = useState<FinancialGoalResponse[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchGoals = useCallback(async (status?: string) => {
-    setIsLoading(true);
+  const fetchGoals = useCallback(async () => {
+    setLoading(true);
     setError(null);
     try {
-      const { data } = await goalApi.getAll(status);
-      setGoals(data);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch goals');
+      const response = await api
+        .get("goals?size=100")
+        .json<{ content: FinancialGoalResponse[] }>();
+      setGoals(response.content);
+    } catch (err) {
+      setError("Erro ao carregar metas");
+      console.error(err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, []);
 
-  const createGoal = async (request: CreateGoalRequest) => {
-    const { data } = await goalApi.create(request);
-    setGoals(prev => [data, ...prev]);
-    return data;
-  };
+  const fetchActiveGoals = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api
+        .get("goals/active")
+        .json<FinancialGoalResponse[]>();
+      setGoals(response);
+    } catch (err) {
+      setError("Erro ao carregar metas ativas");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const updateGoal = async (id: number, request: UpdateGoalRequest) => {
-    const { data } = await goalApi.update(id, request);
-    setGoals(prev => prev.map(g => (g.id === id ? data : g)));
-    return data;
-  };
+  const fetchExpiredGoals = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api
+        .get("goals/expired")
+        .json<FinancialGoalResponse[]>();
+      setGoals(response);
+    } catch (err) {
+      setError("Erro ao carregar metas expiradas");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const addProgress = async (id: number, amount: number) => {
-    const goal = goals.find(g => g.id === id);
-    if (!goal) throw new Error('Goal not found');
-    const newCurrentValue = goal.currentValue + amount;
-    return updateGoal(id, { currentValue: newCurrentValue });
-  };
+  const createGoal = useCallback(async (data: FinancialGoalRequest) => {
+    const response = await api
+      .post("goals", { json: data })
+      .json<FinancialGoalResponse>();
+    setGoals((prev) => [...prev, response]);
+    return response;
+  }, []);
 
-  const deleteGoal = async (id: number) => {
-    await goalApi.delete(id);
-    setGoals(prev => prev.filter(g => g.id !== id));
-  };
+  const updateGoal = useCallback(
+    async (id: string, data: FinancialGoalRequest) => {
+      const response = await api
+        .put(`goals/${id}`, { json: data })
+        .json<FinancialGoalResponse>();
+      setGoals((prev) => prev.map((g) => (g.id === id ? response : g)));
+      return response;
+    },
+    [],
+  );
 
-  useEffect(() => {
-    fetchGoals();
-  }, [fetchGoals]);
+  const deleteGoal = useCallback(async (id: string) => {
+    await api.delete(`goals/${id}`);
+    setGoals((prev) => prev.filter((g) => g.id !== id));
+  }, []);
+
+  const addProgress = useCallback(async (id: string, amount: number) => {
+    const response = await api
+      .post(`goals/${id}/progress?amount=${amount}`)
+      .json<FinancialGoalResponse>();
+    setGoals((prev) => prev.map((g) => (g.id === id ? response : g)));
+    return response;
+  }, []);
 
   return {
     goals,
-    isLoading,
+    loading,
     error,
     fetchGoals,
+    fetchActiveGoals,
+    fetchExpiredGoals,
     createGoal,
     updateGoal,
-    addProgress,
     deleteGoal,
+    addProgress,
   };
 }
