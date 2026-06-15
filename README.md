@@ -1,6 +1,6 @@
 # 🏦 Gestor de Finanças Pessoais
 
-> Plataforma full-stack open-source para gestão financeira pessoal — backend em **Java 21 + Spring Boot 3.2**, frontend em **React 18 + TypeScript + Vite + Tailwind**, banco **PostgreSQL 15**.
+> Plataforma full-stack open-source para gestão financeira pessoal — backend em **Java 21 + Spring Boot 3.2**, frontend em **Preact 10 + TypeScript + Vite + Tailwind CSS v4**, banco **PostgreSQL 15**.
 
 ---
 
@@ -11,7 +11,7 @@ Sistema completo para controle de finanças pessoais com foco em **educação fi
 - 💰 **Transações** (receitas/despesas) com categorização personalizada
 - 🎯 **Metas financeiras** com acompanhamento de progresso
 - 📊 **Dashboard** com KPIs, gráficos e relatórios mensais
-- 👤 **Autenticação JWT** segura (RS256, BCrypt 12 rounds)
+- 👤 **Autenticação JWT** segura (HS256, BCrypt 12 rounds)
 - 🐳 **Docker Compose** para desenvolvimento local
 - 📚 **Documentação OpenAPI/Swagger** automática
 
@@ -28,12 +28,12 @@ gestor-de-financas-pessoais/
 │   ├── pom.xml                  # Parent POM
 │   ├── Dockerfile               # Multi-stage build
 │   └── .env.example
-├── frontend/                    # React 18 + TypeScript + Vite + Tailwind
+├── frontend/                    # Preact 10 + TypeScript + Vite + Tailwind CSS v4
 │   ├── src/
 │   │   ├── components/          # Componentes reutilizáveis
 │   │   ├── pages/               # Páginas/Roteamento
 │   │   ├── hooks/               # Custom hooks
-│   │   ├── services/            # API calls (Axios)
+│   │   ├── services/            # API calls (ky)
 │   │   ├── types/               # Interfaces TypeScript
 │   │   ├── context/             # Context API + useReducer
 │   │   └── utils/               # Funções utilitárias
@@ -55,12 +55,15 @@ gestor-de-financas-pessoais/
 |--------|------------|--------|
 | **Backend** | Java, Spring Boot, Maven | 21 LTS, 3.2.x, 3.9+ |
 | **Database** | PostgreSQL, Flyway, HikariCP | 15+, 9.0+, nativo |
-| **Auth** | JWT RS256, BCrypt, Spring Security | 6.x, 12 rounds |
+| **Auth** | JWT HS256, BCrypt, Spring Security | 6.x, 12 rounds |
 | **API Docs** | SpringDoc OpenAPI / Swagger UI | 2.0+ |
-| **Frontend** | React, TypeScript, Vite, Tailwind | 18, 5.0, 5.0, 3.0 |
-| **State** | Context API + useReducer | Nativo React |
+| **Frontend** | Preact, TypeScript, Vite, Tailwind CSS | 10, 5.0, 8.0, 4.0 |
+| **State** | Context API + useReducer | Nativo Preact |
 | **Charts** | Recharts / Chart.js | Última |
 | **Validation** | Zod | 3.0 |
+| **HTTP Client** | ky | 2.0 |
+| **Testes Unitários** | Vitest + @testing-library/preact | 2.1+ |
+| **Testes E2E** | Playwright | 1.50+ |
 | **Mobile** | React Native | Planejado (V4) |
 | **DevOps** | Docker, Docker Compose, GitHub Actions | — |
 | **Cloud** | AWS (EC2, RDS, S3, ACM) | Produção |
@@ -110,7 +113,7 @@ mvn clean compile
 mvn test
 
 # Testes + Cobertura JaCoCo
-mvn clean verify
+mvn clean verify -Ptest
 
 # Rodar aplicação (porta 8080)
 mvn spring-boot:run
@@ -132,14 +135,17 @@ npm run dev
 # Build de produção
 npm run build
 
-# Linting
-npm run lint
+# Verificar formatação
+npm run format:check
 
 # Testes unitários
 npm run test
 
 # Cobertura
 npm run test:coverage
+
+# Testes E2E
+npm run test:e2e
 ```
 
 ---
@@ -153,13 +159,12 @@ npm run test:coverage
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/financial_platform
 SPRING_DATASOURCE_USERNAME=postgres
 SPRING_DATASOURCE_PASSWORD=postgres
-JWT_PRIVATE_KEY_PATH=classpath:keys/private.pem
-JWT_PUBLIC_KEY_PATH=classpath:keys/public.pem
+JWT_SECRET=base64-encoded-secret-key
 ```
 
 **Frontend** (`frontend/.env`):
 ```bash
-VITE_API_BASE_URL=http://localhost:8080
+VITE_API_URL=http://localhost:8080/api/v1
 ```
 
 ### Endpoints Principais
@@ -194,10 +199,10 @@ GET    /reports/category     # Relatório por categoria
 ```
 
 ### Autenticação
-- **Access Token**: JWT RS256, expiração **24h**
+- **Access Token**: JWT HS256, expiração **24h**
 - **Refresh Token**: expiração **7 dias**, rotação automática
 - Header: `Authorization: Bearer <access_token>`
-- Payload: `sub` (userId), `roles`, `iat`, `exp`
+- Payload: `sub` (userId), `email`, `roles`, `type`, `iat`, `exp`
 
 ---
 
@@ -226,10 +231,10 @@ V4__create_financial_goals_table.sql
 
 | Camada | Ferramenta | Meta Cobertura | Comando |
 |--------|------------|----------------|---------|
-| Backend Unit | JUnit 5 + Mockito | **80%+** | `mvn test` / `mvn clean verify` |
-| Frontend Unit | Vitest + React Testing Library | **60%+** | `npm run test:coverage` |
-| E2E | Cypress | **50%+** (fluxos críticos) | `npm run e2e` |
-| Integração | TestContainers + PostgreSQL | — | `mvn verify -Pintegration` |
+| Backend Unit | JUnit 5 + Mockito | **80%+** | `mvn test` / `mvn clean verify -Ptest` |
+| Frontend Unit | Vitest + @testing-library/preact | **60%+** | `npm run test:coverage` |
+| E2E | Playwright | **50%+** (fluxos críticos) | `npm run test:e2e` |
+| Integração | TestContainers + PostgreSQL | — | `mvn verify -Ptest` |
 
 ### Relatórios
 - **Backend JaCoCo**: `backend/financeapp-api/target/site/jacoco/index.html`
@@ -245,9 +250,10 @@ V4__create_financial_goals_table.sql
 ```yaml
 # Triggers: push to main/develop, pull_request
 jobs:
-  test-frontend:    # Node 20 → npm ci → lint → test:coverage
-  test-backend:     # Java 21 → mvn clean verify
-  build-deploy:     # On main branch → build Docker → deploy AWS
+  test-frontend:    # Node 22 → npm ci → format:check → test:coverage → build
+  test-backend:     # Java 21 → mvn clean verify -Ptest (PostgreSQL via TestContainers)
+  build-docker:     # On main branch → build Docker images
+  verify:           # Final verification
 ```
 
 ### Branches & Versionamento
@@ -295,7 +301,7 @@ jobs:
 | Versão | Foco | Prazo Estimado | Status |
 |--------|------|----------------|--------|
 | **v1.0.0 (MVP)** | Auth, CRUD Transações, Categorias, Testes base | 6-8 sem | 🚧 Em desenvolvimento |
-| **v2.0.0** | Dashboard, Gráficos (Recharts), KPIs, Export CSV, Cypress E2E | 4-6 sem | ⏳ Planejado |
+| **v2.0.0** | Dashboard, Gráficos (Recharts), KPIs, Export CSV, Playwright E2E | 4-6 sem | ⏳ Planejado |
 | **v3.0.0** | Metas Financeiras, Relatórios PDF, Agendamento, Email (SendGrid) | 4-6 sem | ⏳ Planejado |
 | **v4.0.0** | React Native (iOS/Android), Push Notifications, Offline Mode | 8-10 sem | ⏳ Planejado |
 
@@ -303,7 +309,7 @@ jobs:
 
 ## 🔒 Segurança
 
-- ✅ **JWT RS256** (RSA-2048) para tokens
+- ✅ **JWT HS256** (HMAC-SHA256) para tokens
 - ✅ **BCrypt 12 rounds** para hash de senha
 - ✅ **Prepared Statements + ORM** (prevenção SQL Injection)
 - ✅ **Content-Security-Policy** headers

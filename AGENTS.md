@@ -1,45 +1,47 @@
 # AGENTS.md — Financial Management Platform
 
 ## Project Overview
-Full-stack personal finance app: **React 18 + TypeScript + Vite + Tailwind** frontend, **Java 21 + Spring Boot 3.2** backend, **PostgreSQL 15** database. Docker Compose for local dev.
+Full-stack personal finance app: **Preact 10 + TypeScript + Vite 8 + Tailwind CSS v4** frontend, **Java 21 + Spring Boot 3.2** backend, **PostgreSQL 15** database. Docker Compose for local dev.
 
-## Commands (planned — not yet verified)
+## Commands (verified)
 
 ### Frontend (`/frontend`)
 ```bash
-npm install           # install deps
-npm run dev           # dev server (port 5173)
-npm run build         # production build
-npm run lint          # ESLint
-npm run test          # Vitest
-npm run test:coverage # coverage report
+npm install            # install deps
+npm run dev            # dev server (port 5173)
+npm run build          # production build
+npm run format:check   # format check (Prettier)
+npm run test           # Vitest unit tests
+npm run test:coverage  # coverage report
+npm run test:e2e       # E2E tests (Playwright)
 ```
 
 ### Backend (`/backend`)
 ```bash
-mvn clean compile     # compile
-mvn test              # unit tests (JUnit 5 + Mockito)
-mvn clean verify      # tests + JaCoCo coverage
-mvn spring-boot:run   # run app (port 8080)
+mvn clean compile      # compile
+mvn test               # unit tests (JUnit 5 + Mockito)
+mvn clean verify -Ptest # tests + JaCoCo coverage (with TestContainers)
+mvn spring-boot:run    # run app (port 8080)
 ```
 
 ### Docker (from repo root)
 ```bash
-docker compose up -d  # starts frontend:5173, backend:8080, postgres:5432
-docker compose down   # stop
+docker compose up -d   # starts frontend:5173, backend:8080, postgres:5432
+docker compose down    # stop
 ```
 
-## Architecture (from spec)
+## Architecture (from implementation)
 
 ```
-frontend/ (React + Vite)
+frontend/ (Preact + Vite)
   src/
     components/  # reusable UI
     pages/       # route pages
     hooks/       # custom hooks
-    services/    # API calls (Axios)
+    services/    # API calls (ky)
     types/       # TS interfaces
     context/     # Context API + useReducer
+    utils/       # utility functions
 
 backend/ (Spring Boot)
   src/main/java/com/financeapp/
@@ -49,7 +51,7 @@ backend/ (Spring Boot)
     entity/      # JPA models
     dto/         # request/response DTOs
     config/      # Spring config
-    security/    # JWT, BCrypt
+    security/    # JWT (HS256), BCrypt
     exception/   # custom exceptions
   src/main/resources/
     application.yml
@@ -58,18 +60,18 @@ backend/ (Spring Boot)
 
 ## Key Conventions
 - **API base**: `/api/v1`
-- **Auth**: JWT RS256, 24h access / 7d refresh tokens
+- **Auth**: JWT HS256, 24h access / 7d refresh tokens
 - **Password hash**: BCrypt 12 rounds
 - **DB migrations**: Flyway (versioned SQL in `db/migration/`)
 - **Ports**: Frontend 5173, Backend 8080, Postgres 5432
-- **Env**: `VITE_API_BASE_URL` for frontend → backend URL
+- **Env**: `VITE_API_URL` for frontend → backend URL
 
 ## Testing Targets
-| Layer | Tool | Coverage Goal |
-|-------|------|---------------|
-| Frontend | Vitest + React Testing Library | 60%+ |
-| Backend | JUnit 5 + Mockito | 80%+ |
-| E2E | Cypress | 50%+ critical flows |
+| Layer | Tool | Coverage Goal | Command |
+|-------|------|---------------|---------|
+| Frontend | Vitest + @testing-library/preact | 60%+ | `npm run test:coverage` |
+| Backend | JUnit 5 + Mockito + TestContainers | 80%+ | `mvn clean verify -Ptest` |
+| E2E | Playwright | 50%+ critical flows | `npm run test:e2e` |
 
 ## Git Workflow
 - Branches: `main` (prod), `develop` (dev), `feature/*`
@@ -77,8 +79,10 @@ backend/ (Spring Boot)
 - CI: GitHub Actions on push to `main`/`develop` and PRs
 
 ## Notes for Agents
-- **No code exists yet** — this is a spec-only repo. Verify commands once implementation starts.
+- **Code is implemented** — verify commands against actual implementation.
 - Frontend uses Context API (not Redux/Zustand) for global state.
+- Frontend uses Preact 10 (not React), ky (not Axios), Vite 8, Tailwind CSS v4.
 - Backend uses Maven, not Gradle.
+- JWT uses HS256 (HMAC-SHA256) with secret key, not RS256.
 - Dockerfiles use multi-stage builds (builder → runtime).
 - See `Financial_Management_Platform_REVISADO.md` for full spec, data model, and roadmap.
