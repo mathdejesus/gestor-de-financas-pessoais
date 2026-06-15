@@ -1,6 +1,6 @@
-import { h } from "preact";
-import { useAuth } from "../hooks/useAuth";
-import { useTheme } from "../hooks/useTheme";
+import { h } from 'preact';
+import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -19,12 +19,12 @@ export default function Header() {
           <button
             class="theme-toggle"
             onClick={toggleTheme}
-            aria-label={theme === "dark" ? "Modo claro" : "Modo escuro"}
+            aria-label={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
           >
-            {theme === "dark" ? "☀️" : "🌙"}
+            {theme === 'dark' ? '☀️' : '🌙'}
           </button>
           <div class="user-menu">
-            <span class="user-name">{user?.name || "Usuário"}</span>
+            <span class="user-name">{user?.name || 'Usuário'}</span>
             <button class="btn btn-secondary btn-sm" onClick={logout}>
               Sair
             </button>
@@ -34,3 +34,4 @@ export default function Header() {
     </header>
   );
 }
+// test comment
