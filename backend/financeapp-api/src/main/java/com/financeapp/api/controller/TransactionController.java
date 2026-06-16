@@ -5,6 +5,7 @@ import com.financeapp.core.dto.TransactionDTO;
 import com.financeapp.core.dto.UpdateTransactionRequest;
 import com.financeapp.core.entity.User;
 import com.financeapp.core.service.TransactionService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,6 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/transactions")
 @RequiredArgsConstructor
+@RateLimiter(name = "api")
 @Tag(name = "Transactions", description = "Transaction management (income/expenses)")
 public class TransactionController {
 

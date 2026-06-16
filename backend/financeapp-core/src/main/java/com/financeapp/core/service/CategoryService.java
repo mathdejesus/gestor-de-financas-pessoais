@@ -14,6 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Business logic for user-owned transaction categories.
+ * Enforces unique category names per user via the database constraint
+ * and a pre-save existence check.
+ */
 @Service
 @RequiredArgsConstructor
 public class CategoryService {

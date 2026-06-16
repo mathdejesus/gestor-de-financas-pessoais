@@ -52,6 +52,22 @@ app:
     refresh-token-expiration: 604800000  # 7 days
     issuer: financeapp
 
+resilience4j.ratelimiter:
+  configs:
+    default:
+      limit-for-period: 100
+      limit-refresh-period: 1s
+      timeout-duration: 0
+    auth:
+      limit-for-period: 5
+      limit-refresh-period: 1s
+      timeout-duration: 0
+  instances:
+    auth:
+      base-config: auth
+    api:
+      base-config: default
+
 ---
 spring:
   config:

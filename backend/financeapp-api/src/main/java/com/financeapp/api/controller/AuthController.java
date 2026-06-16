@@ -2,6 +2,7 @@ package com.financeapp.api.controller;
 
 import com.financeapp.core.dto.*;
 import com.financeapp.core.service.AuthService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,12 +23,14 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
+    @RateLimiter(name = "auth")
     @Operation(summary = "Register a new user", description = "Create a new user account")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 
     @PostMapping("/login")
+    @RateLimiter(name = "auth")
     @Operation(summary = "Login", description = "Authenticate user and return JWT tokens")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));

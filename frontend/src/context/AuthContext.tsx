@@ -2,6 +2,16 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import type { User } from '../types';
 import { authApi } from '../services/api';
 
+/**
+ * Authentication state and actions provided via React Context.
+ *
+ * Token storage contract:
+ * - {@code accessToken}: short-lived JWT (24h) sent in Authorization header
+ * - {@code refreshToken}: long-lived JWT (7d) used to rotate access tokens
+ * - {@code user}: serialized User JSON for instant UI display on reload
+ *
+ * These keys must match what api.ts reads in its auth hook.
+ */
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -17,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  /** On mount, hydrate from localStorage so the user isn't logged out on refresh. */
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const storedUser = localStorage.getItem('user');
@@ -64,6 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Hook to access auth state and actions. Must be used within an AuthProvider.
+ * Throws a descriptive error if called outside the provider tree (catches
+ * misconfiguration at dev time rather than silently returning undefined).
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

@@ -17,6 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Business logic for income/expense transactions.
+ * Every operation validates that the resource belongs to the requesting user
+ * to enforce multi-tenant data isolation.
+ */
 @Service
 @RequiredArgsConstructor
 public class TransactionService {

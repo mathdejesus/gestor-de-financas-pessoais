@@ -15,6 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Business logic for financial goals.
+ * Automatically transitions goals to COMPLETED status when currentValue
+ * reaches or exceeds targetValue on update.
+ */
 @Service
 @RequiredArgsConstructor
 public class GoalService {

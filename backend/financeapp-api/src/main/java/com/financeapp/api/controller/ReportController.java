@@ -3,6 +3,7 @@ package com.financeapp.api.controller;
 import com.financeapp.api.service.ReportService;
 import com.financeapp.core.dto.ReportResponse;
 import com.financeapp.core.entity.User;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 @RestController
 @RequestMapping("/api/v1/reports")
 @RequiredArgsConstructor
+@RateLimiter(name = "api")
 @Tag(name = "Reports", description = "Financial reports and PDF generation")
 public class ReportController {
 

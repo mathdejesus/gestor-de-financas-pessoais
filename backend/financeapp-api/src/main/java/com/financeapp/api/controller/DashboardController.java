@@ -7,6 +7,7 @@ import com.financeapp.core.dto.TransactionDTO;
 import com.financeapp.core.entity.User;
 import com.financeapp.core.service.DashboardService;
 import com.financeapp.core.service.TransactionService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @RequiredArgsConstructor
+@RateLimiter(name = "api")
 @Tag(name = "Dashboard", description = "Dashboard summary, charts and export")
 public class DashboardController {
 

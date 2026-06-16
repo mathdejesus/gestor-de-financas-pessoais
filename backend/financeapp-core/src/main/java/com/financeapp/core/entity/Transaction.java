@@ -10,6 +10,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * A financial transaction (income or expense) tied to a user and optional category.
+ *
+ * Uses FetchType.LAZY on relationships to avoid N+1 queries and circular fetches
+ * when serializing. LAZY is the default for @ManyToOne in JPA but is explicit here
+ * for clarity.
+ */
 @Entity
 @Table(name = "transactions")
 @Getter

@@ -44,7 +44,7 @@ gestor-de-financas-pessoais/
 ├── docker-compose.yml           # Orquestração local (3 serviços)
 ├── .github/workflows/           # CI/CD GitHub Actions
 ├── AGENTS.md                    # Guia para agentes IA/automação
-├── Financial_Management_Platform_REVISADO.md  # Especificação completa
+├── ACTION_PLAN.md               # Planos de implementação
 ├── LICENSE                      # MIT
 └── README.md                    # Este arquivo
 ```
@@ -59,9 +59,9 @@ gestor-de-financas-pessoais/
 | **API Docs** | SpringDoc OpenAPI / Swagger UI | 2.0+ |
 | **Frontend** | Preact, TypeScript, Vite, Tailwind CSS | 10, 5.0, 8.0, 4.0 |
 | **State** | Context API + useReducer | Nativo Preact |
-| **Charts** | Recharts / Chart.js | Última |
-| **Validation** | Zod | 3.0 |
 | **HTTP Client** | ky | 2.0 |
+| **Rate Limiting** | Resilience4j + Nginx | 2.2.0 |
+| **Token Revocation** | tokenVersion claim | Nativo |
 | **Testes Unitários** | Vitest + @testing-library/preact | 2.1+ |
 | **Testes E2E** | Playwright | 1.50+ |
 | **Mobile** | React Native | Planejado (V4) |
@@ -115,8 +115,11 @@ mvn test
 # Testes + Cobertura JaCoCo
 mvn clean verify -Ptest
 
-# Rodar aplicação (porta 8080)
-mvn spring-boot:run
+# Rodar aplicação com H2 (dev, sem PostgreSQL)
+mvn spring-boot:run -pl financeapp-api -Pdev -Dspring-boot.run.profiles=dev
+
+# Ou com PostgreSQL (produção)
+mvn spring-boot:run -pl financeapp-api
 
 # Gerar relatório de cobertura
 # Abrir: backend/financeapp-api/target/site/jacoco/index.html
@@ -135,8 +138,8 @@ npm run dev
 # Build de produção
 npm run build
 
-# Verificar formatação
-npm run format:check
+# Lint
+npm run lint
 
 # Testes unitários
 npm run test
@@ -164,7 +167,7 @@ JWT_SECRET=base64-encoded-secret-key
 
 **Frontend** (`frontend/.env`):
 ```bash
-VITE_API_URL=http://localhost:8080/api/v1
+VITE_API_URL=http://localhost:8080/api
 ```
 
 ### Endpoints Principais
@@ -193,16 +196,18 @@ DELETE /goals/{id}           # Deletar meta
 PUT    /goals/{id}/progress  # Atualizar progresso da meta
 
 GET    /dashboard/summary    # Resumo: saldo, receitas, despesas, economia
-GET    /dashboard/charts     # Dados para gráficos
-GET    /reports/monthly      # Relatório mensal
-GET    /reports/category     # Relatório por categoria
+GET    /dashboard/monthly    # Dados mensais para gráficos
+GET    /dashboard/categories # Despesas por categoria
+GET    /reports/financial    # Relatório financeiro JSON
+GET    /reports/pdf          # Relatório financeiro PDF
 ```
 
 ### Autenticação
-- **Access Token**: JWT HS256, expiração **24h**
-- **Refresh Token**: expiração **7 dias**, rotação automática
+- **Access Token**: JWT HS256, expiração **24h**, valida `tokenVersion` embutido
+- **Refresh Token**: expiração **7 dias**, rotação automática com revogação via `tokenVersion`
+- **Token Revocation**: `tokenVersion` incrementado a cada refresh/troca de senha — tokens antigos são rejeitados
 - Header: `Authorization: Bearer <access_token>`
-- Payload: `sub` (userId), `email`, `roles`, `type`, `iat`, `exp`
+- Payload: `sub` (userId), `email`, `type`, `tokenVersion`, `iat`, `exp`
 
 ---
 
@@ -223,6 +228,7 @@ V1__create_users_table.sql
 V2__create_categories_table.sql
 V3__create_transactions_table.sql
 V4__create_financial_goals_table.sql
+V5__add_token_version_to_users.sql
 ```
 
 ---
@@ -250,7 +256,7 @@ V4__create_financial_goals_table.sql
 ```yaml
 # Triggers: push to main/develop, pull_request
 jobs:
-  test-frontend:    # Node 22 → npm ci → format:check → test:coverage → build
+  test-frontend:    # Node 22 → npm ci → lint → test:coverage → build
   test-backend:     # Java 21 → mvn clean verify -Ptest (PostgreSQL via TestContainers)
   build-docker:     # On main branch → build Docker images
   verify:           # Final verification
@@ -269,8 +275,8 @@ jobs:
 | Arquivo | Descrição |
 |---------|-----------|
 | **AGENTS.md** | Guia para agentes IA, comandos, convenções |
-| **Financial_Management_Platform_REVISADO.md** | Especificação técnica completa (810+ linhas) |
-| **Swagger UI** | `http://localhost:8080/swagger-ui.html` (backend rodando) |
+| **ACTION_PLAN.md** | Planos de implementação executados |
+| **Swagger UI** | `http://localhost:8080/swagger-ui.html` (backend rodando, dev profile) |
 | **LICENSE** | Licença MIT |
 
 ---
@@ -314,9 +320,10 @@ jobs:
 - ✅ **Prepared Statements + ORM** (prevenção SQL Injection)
 - ✅ **Content-Security-Policy** headers
 - ✅ **CORS** whitelist configurável
+- ✅ **Rate Limiting** (Resilience4j + Nginx)
+- ✅ **Token Versioning** (revogação de tokens por troca de senha/refresh)
 - ✅ **Jakarta Validation** em todos endpoints
-- 🔄 **Rate Limiting** (Resilience4j - a implementar)
-- 🔄 **Penetration Testing** (OWASP ZAP - a agendar)
+- ⚠️ **Penetration Testing** (análise de código realizada, pendente OWASP ZAP automatizado)
 
 ---
 
@@ -330,18 +337,14 @@ Este projeto está licenciado sob a **Licença MIT** - veja o arquivo [LICENSE](
 
 - 🐛 **Bugs**: [Abra uma issue](../../issues)
 - 💡 **Feature Requests**: [Abra uma issue](../../issues)
-- 📖 **Documentação**: Consulte `AGENTS.md` e `Financial_Management_Platform_REVISADO.md`
+- 📖 **Documentação**: Consulte `AGENTS.md`
 - 💬 **Dúvidas**: Inicie uma [Discussion](../../discussions)
 
 ---
 
 ## 👥 Créditos
 
-Desenvolvido com ❤️ por:
-- **Time de Desenvolvimento** — Arquitetura, decisões, review, deploy
-- **Nemotron 3 Ultra (NVIDIA)** — Geração de código, documentação, testes, automação
-
-> **Fluxo de trabalho**: Time define arquitetura → Nemotron gera código base → Time revisa, testa, integra → Deploy
+Desenvolvido com ❤️ pela equipe do projeto.
 
 ---
 

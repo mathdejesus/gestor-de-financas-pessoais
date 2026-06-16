@@ -3,6 +3,7 @@ package com.financeapp.api.controller;
 import com.financeapp.core.dto.*;
 import com.financeapp.core.entity.User;
 import com.financeapp.core.service.CategoryService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
+@RateLimiter(name = "api")
 @Tag(name = "Categories", description = "Category management")
 public class CategoryController {
 

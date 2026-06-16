@@ -1,6 +1,7 @@
 package com.financeapp.api.config;
 
 import com.financeapp.core.exception.*;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,17 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Centralized exception handling for all controllers.
+ *
+ * Maps domain exceptions to standardized HTTP responses with a consistent body:
+ * <pre>
+ * { "timestamp": "2026-06-15T12:00:00", "status": 400, "error": "message" }
+ * </pre>
+ *
+ * For validation errors ({@link MethodArgumentNotValidException}), the body also
+ * includes a {@code fields} map with per-field error messages.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -60,6 +72,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ResponseEntity<Map<String, Object>> handleRateLimit(RequestNotPermitted ex) {
+        return buildResponse(HttpStatus.TOO_MANY_REQUESTS, "Too many requests — please slow down");
     }
 
     @ExceptionHandler(Exception.class)

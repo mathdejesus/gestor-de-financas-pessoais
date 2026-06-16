@@ -21,6 +21,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Aggregation service for dashboard KPIs and charts.
+ * Computes totals, monthly trends, and category breakdowns from
+ * the user's transactions within an optional date range.
+ */
 @Service
 @RequiredArgsConstructor
 public class DashboardService {

@@ -19,6 +19,28 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
 
+/**
+ * Extracts and validates JWT access tokens from the Authorization header
+ * on every request, then sets the SecurityContext if valid.
+ *
+ * Extends {@link OncePerRequestFilter} instead of plain {@link jakarta.servlet.Filter}
+ * to guarantee a single execution per request dispatch chain (Spring may dispatch
+ * the same request multiple times via {@code forward()} or error handling).
+ *
+ * Only tokens with {@code type: "access"} are accepted here. Refresh tokens
+ * with {@code type: "refresh"} are silently skipped, forcing them through the
+ * dedicated refresh endpoint instead.
+ *
+ * Also validates the embedded {@code tokenVersion} claim against the user's
+ * current {@code tokenVersion} in the database. Tokens with a stale version
+ * (e.g. after password change or token rotation) are rejected even if the
+ * JWT signature and expiry are still valid.
+ *
+ * If the token is missing, expired, or invalid the filter chain continues
+ * without setting an authenticated SecurityContext. Downstream security
+ * rules (configured in {@link com.financeapp.api.config.SecurityConfig})
+ * reject unauthenticated requests via 401/403 as appropriate.
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -41,10 +63,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if (userOpt.isPresent()) {
                     User user = userOpt.get();
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    int tokenVersion = jwtUtil.getTokenVersion(token);
+                    if (tokenVersion >= user.getTokenVersion()) {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
             }
         }

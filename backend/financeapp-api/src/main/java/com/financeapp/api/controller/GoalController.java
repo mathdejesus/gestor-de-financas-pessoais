@@ -6,6 +6,7 @@ import com.financeapp.core.dto.UpdateGoalRequest;
 import com.financeapp.core.entity.User;
 import com.financeapp.core.enums.GoalStatus;
 import com.financeapp.core.service.GoalService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/goals")
 @RequiredArgsConstructor
+@RateLimiter(name = "api")
 @Tag(name = "Financial Goals", description = "Goal creation and progress tracking")
 public class GoalController {
 

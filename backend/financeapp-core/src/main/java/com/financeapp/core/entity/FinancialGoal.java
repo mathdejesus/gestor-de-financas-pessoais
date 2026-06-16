@@ -9,6 +9,16 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * A user-defined savings or financial target with progress tracking.
+ *
+ * Status lifecycle: ACTIVE -> (progress reaches target) -> COMPLETED
+ *                    ACTIVE -> (user abandons) -> ABANDONED
+ *
+ * {@code currentValue} defaults to ZERO when a goal is created; it accumulates
+ * as the user logs progress. When currentValue >= targetValue the status is
+ * automatically set to COMPLETED by the service layer.
+ */
 @Entity
 @Table(name = "financial_goals")
 @Getter

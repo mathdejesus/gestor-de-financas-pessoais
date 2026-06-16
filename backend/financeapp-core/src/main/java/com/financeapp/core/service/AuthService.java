@@ -22,6 +22,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    /**
+     * Registers a new user account.
+     *
+     * @param request name, email, and password
+     * @return AuthResponse with access token (24h), refresh token (7d), and serialized user
+     * @throws DuplicateEmailException if email already exists
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -36,8 +43,8 @@ public class AuthService {
 
         user = userRepository.save(user);
 
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getTokenVersion());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail(), user.getTokenVersion());
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -47,6 +54,13 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * Authenticates a user by email and password.
+     *
+     * @param request email and password
+     * @return AuthResponse with new token pair and user info
+     * @throws UnauthorizedException if email not found or password doesn't match
+     */
     @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -56,8 +70,8 @@ public class AuthService {
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getTokenVersion());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail(), user.getTokenVersion());
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -67,6 +81,16 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * Issues a new token pair from a valid refresh token.
+     * Validates that the provided token has {@code type: "refresh"} and belongs
+     * to an existing user. Both tokens are rotated (old becomes invalid).
+     * Increments the user's token version to invalidate any old refresh tokens.
+     *
+     * @param request refresh token string
+     * @return new AuthResponse with rotated token pair
+     * @throws UnauthorizedException if token is invalid or wrong type
+     */
     @Transactional
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         String refreshToken = request.getRefreshToken();
@@ -84,8 +108,16 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail());
-        String newRefreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+        int tokenVersion = jwtUtil.getTokenVersion(refreshToken);
+        if (tokenVersion < user.getTokenVersion()) {
+            throw new UnauthorizedException("Token has been revoked");
+        }
+
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        user = userRepository.save(user);
+
+        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getTokenVersion());
+        String newRefreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail(), user.getTokenVersion());
 
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
@@ -104,6 +136,10 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * @param userId authenticated user's ID (from JWT subject)
+     * @return user profile DTO (name, email, createdAt)
+     */
     @Transactional(readOnly = true)
     public UserDTO getProfile(Long userId) {
         User user = userRepository.findById(userId)
@@ -111,12 +147,19 @@ public class AuthService {
         return toDTO(user);
     }
 
+    /**
+     * Updates user's name and/or email. If the email is changing, validates
+     * uniqueness first to prevent duplicate accounts.
+     *
+     * @param userId authenticated user's ID
+     * @param request fields to update (name, email)
+     * @return updated user profile DTO
+     */
     @Transactional
     public UserDTO updateProfile(Long userId, UpdateProfileRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        // Check if email is being changed and if it already exists
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.getEmail())) {
                 throw new DuplicateEmailException(request.getEmail());
@@ -132,6 +175,13 @@ public class AuthService {
         return toDTO(user);
     }
 
+    /**
+     * Changes user's password after verifying current password.
+     *
+     * @param userId authenticated user's ID
+     * @param request current password (verified) and new password (BCrypt hashed)
+     * @throws UnauthorizedException if current password is incorrect
+     */
     @Transactional
     public void changePassword(Long userId, ChangePasswordRequest request) {
         User user = userRepository.findById(userId)
@@ -142,6 +192,7 @@ public class AuthService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
     }
 }

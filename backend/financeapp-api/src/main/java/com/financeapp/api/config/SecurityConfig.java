@@ -22,6 +22,22 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Spring Security configuration for the financeapp API.
+ *
+ * Design decisions:
+ * - CSRF disabled (this is a stateless JSON API using bearer tokens, not session cookies)
+ * - Session creation set to STATELESS (no HttpSession, every request is authenticated independently)
+ * - CORS is configurable via {@code app.cors.allowed-origins} env var (defaults to localhost:5173,3000)
+ * - Only auth endpoints and actuator health are public; everything else requires a valid JWT
+ *
+ * The filter chain:
+ * 1. CorsFilter (handles preflight OPTIONS requests)
+ * 2. JwtAuthenticationFilter (extracts/validates JWT, sets SecurityContext)
+ * 3. UsernamePasswordAuthenticationFilter (Spring default, not used — JWTs are pre-authenticated)
+ * 4. ExceptionTranslationFilter (translates auth errors to HTTP responses)
+ * 5. AuthorizationFilter (enforces endpoint-level access rules)
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
