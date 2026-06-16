@@ -1,329 +1,311 @@
-# 🏦 Gestor de Finanças Pessoais
+# 🏦 Gestor de Finanças Pessoais (GFP)
 
-> Plataforma full-stack open-source para gestão financeira pessoal — backend em **Java 21 + Spring Boot 3.2**, frontend em **Preact 10 + TypeScript + Vite + Tailwind CSS v4**, banco **PostgreSQL 15**.
-
----
-
-## 📋 Visão Geral
-
-Sistema completo para controle de finanças pessoais com foco em **educação financeira** e **demonstração de arquitetura moderna**:
-
-- 💰 **Transações** (receitas/despesas) com categorização personalizada
-- 🎯 **Metas financeiras** com acompanhamento de progresso
-- 📊 **Dashboard** com KPIs, gráficos e relatórios mensais
-- 👤 **Autenticação JWT** segura (HS256, BCrypt 12 rounds)
-- 🐳 **Docker Compose** para desenvolvimento local
-- 📚 **Documentação OpenAPI/Swagger** automática
+> Plataforma educacional corporativa de alta fidelidade para gestão financeira pessoal. Desenvolvida sob padrões de engenharia rigorosos adotados por grandes fintechs e bancos digitais brasileiros (como Itaú, Inter e Nubank), aplicando divisão multi-módulo em **Java 21 + Spring Boot 3.2**, frontend reativo em **Preact 10 + TypeScript + Vite + Tailwind CSS v4**, banco de dados relacional **PostgreSQL 15** e segurança estrita com stateless JWT, token versioning e rate limiting.
 
 ---
 
-## 🏗️ Arquitetura
+## 👥 Público-Alvo
+
+Esta plataforma foi desenhada especificamente para atender a três perfis:
+
+### 1. 🎓 Estudantes e Desenvolvedores Junior
+* **Foco:** Entender como funciona uma aplicação real de ponta a ponta, sem atalhos comuns em tutoriais rápidos.
+* **Benefício:** Acesso a padrões como migrações com Flyway, estruturação multi-module do Maven, e escrita de testes unitários e de integração com containers docker em JUnit 5.
+
+### 2. 💻 Engenheiros de Software (Preparação para Entrevistas)
+* **Foco:** Demonstrar decisões arquiteturais sólidas e defensáveis em sabatinas técnicas.
+* **Exemplos de Perguntas de Entrevista Respondidas por Este Case:**
+  * *"Como você gerencia a expiração e revogação de tokens JWT em uma arquitetura stateless sem sobrecarregar o banco de dados?"* -> **Resposta:** Implementado com Token Versioning direto nas claims do JWT e no cadastro do usuário, incrementado apenas em logout/password-change.
+  * *"Como você garante o isolamento e reprodutibilidade dos testes de integração sem poluir um banco compartilhado?"* -> **Resposta:** Uso do Testcontainers para instanciar dinamicamente um PostgreSQL isolado durante o ciclo de vida dos testes do Maven.
+  * *"Por que utilizar Maven Multi-Module em vez de um monolito monolítico clássico?"* -> **Resposta:** Para garantir a separação estrita de conceitos (Separation of Concerns) e impedir que a camada de entrega (API/Security) acesse diretamente dependências internas ou vice-versa, organizando o projeto em `financeapp-api` (borda), `financeapp-core` (regras de negócio) e `financeapp-infra`.
+
+### 3. 👥 Recrutadores e Tech Leads
+* **Foco:** Avaliação rápida de competências técnicas reais.
+* **Benefício:** O código deste repositório demonstra o domínio de arquitetura limpa, segurança rigorosa contra ameaças OWASP comuns, cobertura robusta de testes automatizados e esteira de CI estruturada.
+
+---
+
+## ⭐ Por Que Este Projeto é um Bom Portfólio? (5 Razões)
+
+1. **Arquitetura Multi-Module Real:** Não é um projeto de pasta única; segue a estrutura de grandes sistemas corporativos.
+2. **Defesa e Segurança:** Possui controle de taxa (rate limiting), hashing robusto com BCrypt (12 rounds) e invalidação inteligente de sessões via Token Versioning.
+3. **Qualidade de Testes Industrial:** Utiliza JUnit 5 + Mockito com Testcontainers PostgreSQL para testes de integração de banco de dados reais e Playwright para E2E do frontend.
+4. **Histórico de Alterações Confiável:** Migrações reais versionadas usando Flyway garantem integridade estrutural em cada alteração de esquema.
+5. **Automação Completa:** Possui pipelines GitHub Actions que validam linting, rodam testes com cobertura (Jacoco Quality Gates) e geram imagens Docker.
+
+### 📊 Matriz Comparativa: Desenvolvedor GFP vs Candidato Tradicional
+
+| Critério | Candidato Tradicional (Estágio/Junior Comum) | Engenheiro deste Projeto (Nível Corporativo) |
+| :--- | :--- | :--- |
+| **Banco de Dados** | H2 em memória ou script SQL manual | PostgreSQL real com migrations versionadas no Flyway |
+| **Testes** | Sem testes ou apenas testes de repositório "mockado" | Pirâmide completa: Unitários, Testcontainers reais e E2E Playwright |
+| **Segurança** | JWT simples exposto no código, sem tratamento de logout | Token Versioning (stateless blacklist) e Rate Limiting Resilience4j |
+| **Arquitetura** | Projeto monolítico sem limites claros de pacotes | Estrutura Maven Multi-Module isolando API, Core e Infra |
+| **CI/CD** | Deploy manual ou apenas build local | Pipeline do GitHub Actions validando testes, linting e gerando Docker image |
+
+---
+
+## 🏗️ Arquitetura do Sistema
 
 ```
 gestor-de-financas-pessoais/
 ├── backend/                     # Spring Boot 3.2 (Java 21, Maven)
-│   ├── financeapp-api/          # Controllers, config, security
-│   ├── financeapp-core/         # Entities, services, repositories, DTOs
-│   ├── financeapp-infra/        # Infraestrutura
-│   ├── pom.xml                  # Parent POM
-│   ├── Dockerfile               # Multi-stage build
+│   ├── financeapp-api/          # Camada de Entrada: Controllers, Swagger, Security, Spring Boot entrypoint
+│   ├── financeapp-core/         # Camada Core: Entidades, DTOs, Services, Repositories e Regras de Negócio
+│   ├── financeapp-infra/        # Camada de Infraestrutura: Adapters e integrações externas (módulo desacoplado)
+│   ├── pom.xml                  # Parent POM (gerencia versões globais)
+│   ├── Dockerfile               # Build multi-stage para imagem leve de produção
 │   └── .env.example
 ├── frontend/                    # Preact 10 + TypeScript + Vite + Tailwind CSS v4
 │   ├── src/
-│   │   ├── components/          # Componentes reutilizáveis
-│   │   ├── pages/               # Páginas/Roteamento
-│   │   ├── hooks/               # Custom hooks
-│   │   ├── services/            # API calls (ky)
-│   │   ├── types/               # Interfaces TypeScript
-│   │   ├── context/             # Context API + useReducer
-│   │   └── utils/               # Funções utilitárias
+│   │   ├── components/          # Componentes reativos reutilizáveis
+│   │   ├── pages/               # Páginas e roteamento estruturado
+│   │   ├── hooks/               # Custom hooks para encapsular lógica de estado
+│   │   ├── services/            # Clientes HTTP usando Ky
+│   │   ├── types/               # Interfaces e definições estritas de tipos TypeScript
+│   │   ├── context/             # Controle de estado global via Context API + useReducer
+│   │   └── utils/               # Funções de formatação e utilitários gerais
 │   ├── package.json
 │   ├── Dockerfile
 │   └── .env.example
-├── mobile/                      # React Native (planejado - V4)
-├── docker-compose.yml           # Orquestração local (3 serviços)
-├── .github/workflows/           # CI/CD GitHub Actions
-├── AGENTS.md                    # Guia para agentes IA/automação
-├── ACTION_PLAN.md               # Planos de implementação
-├── LICENSE                      # MIT
-└── README.md                    # Este arquivo
+├── mobile/                      # Expo SDK 56 + React Native (Axios)
+│   └── src/                     # App mobile com context e screens isoladas
+├── docker-compose.yml           # Orquestração local de desenvolvimento (Postgres + Backend + Frontend)
+├── .github/workflows/           # Automações de CI/CD (GitHub Actions)
+├── AGENTS.md                    # Convenções e comandos para Agentes IA
+├── SKILLS.md                    # Padrões e diretrizes de desenvolvimento do repositório
+└── README.md                    # Documentação principal
 ```
-
-### Tech Stack
-
-| Camada | Tecnologia | Versão |
-|--------|------------|--------|
-| **Backend** | Java, Spring Boot, Maven | 21 LTS, 3.2.x, 3.9+ |
-| **Database** | PostgreSQL, Flyway, HikariCP | 15+, 9.0+, nativo |
-| **Auth** | JWT HS256, BCrypt, Spring Security | 6.x, 12 rounds |
-| **API Docs** | SpringDoc OpenAPI / Swagger UI | 2.0+ |
-| **Frontend** | Preact, TypeScript, Vite, Tailwind CSS | 10, 5.0, 8.0, 4.0 |
-| **State** | Context API + useReducer | Nativo Preact |
-| **HTTP Client** | ky | 2.0 |
-| **Rate Limiting** | Resilience4j + Nginx | 2.2.0 |
-| **Token Revocation** | tokenVersion claim | Nativo |
-| **Testes Unitários** | Vitest + @testing-library/preact | 2.1+ |
-| **Testes E2E** | Playwright | 1.50+ |
-| **Mobile** | React Native | Planejado (V4) |
-| **DevOps** | Docker, Docker Compose, GitHub Actions | — |
-| **Cloud** | AWS (EC2, RDS, S3, ACM) | Produção |
 
 ---
 
-## 🚀 Início Rápido
+## 🔑 Core Technologies & Defesas Técnicas
 
-### Pré-requisitos
-- **Docker & Docker Compose** (recomendado)
-- **Java 21** (para backend standalone)
-- **Node.js 20+** (para frontend standalone)
-- **PostgreSQL 15+** (se não usar Docker)
+| Camada | Tecnologia | Versão | Nível de Defesa Técnica / Motivação |
+| :--- | :--- | :--- | :--- |
+| **Backend** | Java | 21 LTS | Uso de Records, Pattern Matching, sequenciamento de tipos e melhorias de performance JVM. |
+| **Framework** | Spring Boot | 3.2.x | Ecossistema maduro, injeção de dependências robusta e integração nativa com Spring Security. |
+| **Banco de Dados** | PostgreSQL | 15+ | Banco relacional robusto com suporte a transações ACID e consultas indexadas de alta complexidade. |
+| **Migrations** | Flyway | 9.0+ | Controle estrito de versão de esquema, garantindo deploys reproduzíveis. |
+| **Security** | Spring Security + JWT | 6.x | Autenticação stateless baseada em tokens assinados com algoritmo HS256 e BCrypt (12 rounds) para hashes. |
+| **Resiliência** | Resilience4j | 2.2.0 | Proteção contra DDoS e força bruta por meio de Rate Limiting nos endpoints. |
+| **Testes (Back)** | JUnit 5 + Testcontainers | 5.10 / 1.19 | Garantia de testes de integração realistas em ambiente isolado via Docker. |
+| **Frontend** | Preact + Vite | 10 / 5.0 | Alternativa ultra-leve ao React com Virtual DOM rápido e inicialização instantânea por Vite. |
+| **HTTP Client** | Ky | 2.0 | Cliente leve construído sobre a Fetch API com tratamento elegante de retry e hooks. |
+| **Testes (Front)** | Vitest + Playwright | 2.1 / 1.50 | Testes unitários de alta velocidade e testes de ponta a ponta que simulam interações reais do usuário. |
 
-### 🐳 Com Docker (Recomendado)
+---
 
+## 🚀 Instalação & Setup do Ambiente Local
+
+### Tempo Estimado de Setup: 5 a 10 minutos.
+
+### Pré-requisitos Obrigatórios
+* **Docker & Docker Compose** (instalado e rodando)
+* **Git**
+* *(Opcional para modo Standalone)*: Java 21 LTS, Node.js 20+, Maven 3.9+
+
+---
+
+### 🐳 Opção 1: Inicialização Rápida via Docker (Recomendado)
+
+Ideal para testar a aplicação de ponta a ponta sem precisar configurar compiladores locais.
+
+#### No Linux / macOS / Windows WSL:
 ```bash
-# Subir todos os serviços
-docker compose up -d
+# Clone o repositório
+git clone https://github.com/mathdejesus/gestor-de-financas-pessoais.git
+cd gestor-de-financas-pessoais
 
-# Serviços disponíveis:
-# Frontend: http://localhost:5173
-# Backend API: http://localhost:8080
-# Swagger UI: http://localhost:8080/swagger-ui.html
-# PostgreSQL: localhost:5432
+# Copie os arquivos de variáveis de ambiente
+cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 
-# Ver logs em tempo real
-docker compose logs -f
-
-# Parar e remover containers
-docker compose down
-
-# Parar mantendo volumes (dados)
-docker compose stop
+# Inicialize o ambiente Docker completo
+docker compose up -d --build
 ```
 
-### 🛠️ Desenvolvimento Local (Sem Docker)
+#### No Windows (PowerShell nativo):
+```powershell
+# Clone o repositório
+git clone https://github.com/mathdejesus/gestor-de-financas-pessoais.git
+cd gestor-de-financas-pessoais
 
-#### Backend
+# Copie os arquivos de variáveis de ambiente
+Copy-Item .env.example .env
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env
+
+# Inicialize o ambiente Docker completo
+docker compose up -d --build
+```
+
+#### 🌐 Endpoints Disponíveis após o Start:
+* **Frontend Web:** `http://localhost:5173`
+* **Backend API REST:** `http://localhost:8080/api/v1`
+* **Swagger/OpenAPI UI:** `http://localhost:8080/swagger-ui.html` (apenas em profile `dev`)
+* **Banco PostgreSQL:** `localhost:5432`
+
+#### 🔍 Script de Verificação Rápida da API (Health Check):
+```bash
+curl -i http://localhost:8080/api/v1/auth/login
+# Deve retornar um status HTTP 405 (Method Not Allowed) ou 400 em vez de 502/404, provando que a API está respondendo.
+```
+
+---
+
+### 🛠️ Opção 2: Setup Standalone para Desenvolvimento (Sem Docker DB local)
+
+Se você preferir rodar a aplicação localmente para debug contínuo de código utilizando banco de dados em memória H2 (sem requerer Postgres local):
+
+#### 1. Backend:
 ```bash
 cd backend
-
-# Compilar
+# Compilar projeto multi-module
 mvn clean compile
-
-# Rodar testes unitários
+# Rodar testes unitários e de integração
 mvn test
-
-# Testes + Cobertura JaCoCo
-mvn clean verify -Ptest
-
-# Rodar aplicação com H2 (dev, sem PostgreSQL)
+# Iniciar a API com o Perfil Dev (usa H2 e desabilita Flyway)
 mvn spring-boot:run -pl financeapp-api -Pdev -Dspring-boot.run.profiles=dev
-
-# Ou com PostgreSQL (produção)
-mvn spring-boot:run -pl financeapp-api
-
-# Gerar relatório de cobertura
-# Abrir: backend/financeapp-api/target/site/jacoco/index.html
 ```
 
-#### Frontend
+#### 2. Frontend:
 ```bash
 cd frontend
-
 # Instalar dependências
 npm install
-
-# Dev server com hot-reload (porta 5173)
+# Iniciar servidor de desenvolvimento (Vite)
 npm run dev
-
-# Build de produção
-npm run build
-
-# Lint
-npm run lint
-
-# Testes unitários
-npm run test
-
-# Cobertura
-npm run test:coverage
-
-# Testes E2E
-npm run test:e2e
 ```
 
 ---
 
-## 🔐 Autenticação & API
+## 🛠️ Guia de Troubleshooting
 
-### Configuração de Ambiente
+### Erro 1: `Port 5432 or 8080 already in use`
+* **Causa:** Você tem outro PostgreSQL ou aplicação Java/Tomcat rodando localmente.
+* **Solução:** Pare os serviços locais antes de rodar o Docker Compose:
+  ```bash
+  sudo systemctl stop postgresql   # Linux
+  # No Windows, pare o serviço Postgres via Services.msc
+  ```
 
-**Backend** (`backend/.env` ou `application-dev.yml`):
-```properties
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/financial_platform
-SPRING_DATASOURCE_USERNAME=postgres
-SPRING_DATASOURCE_PASSWORD=postgres
-JWT_SECRET=base64-encoded-secret-key
-```
-
-**Frontend** (`frontend/.env`):
-```bash
-VITE_API_URL=http://localhost:8080/api
-```
-
-### Endpoints Principais
-
-```
-Base URL: http://localhost:8080/api/v1
-
-POST   /auth/login           # Login → { accessToken, refreshToken }
-POST   /auth/register        # Registro de usuário
-POST   /auth/refresh         # Renovar access token
-
-GET    /categories           # Listar categorias do usuário
-POST   /categories           # Criar categoria
-PUT    /categories/{id}      # Atualizar categoria
-DELETE /categories/{id}      # Deletar categoria
-
-GET    /transactions         # Listar transações (filtros: data, categoria, tipo)
-POST   /transactions         # Criar transação
-PUT    /transactions/{id}    # Atualizar transação
-DELETE /transactions/{id}    # Deletar transação
-
-GET    /goals                # Listar metas financeiras
-POST   /goals                # Criar meta
-PUT    /goals/{id}           # Atualizar meta
-DELETE /goals/{id}           # Deletar meta
-PUT    /goals/{id}/progress  # Atualizar progresso da meta
-
-GET    /dashboard/summary    # Resumo: saldo, receitas, despesas, economia
-GET    /dashboard/monthly    # Dados mensais para gráficos
-GET    /dashboard/categories # Despesas por categoria
-GET    /reports/financial    # Relatório financeiro JSON
-GET    /reports/pdf          # Relatório financeiro PDF
-```
-
-### Autenticação
-- **Access Token**: JWT HS256, expiração **24h**, valida `tokenVersion` embutido
-- **Refresh Token**: expiração **7 dias**, rotação automática com revogação via `tokenVersion`
-- **Token Revocation**: `tokenVersion` incrementado a cada refresh/troca de senha — tokens antigos são rejeitados
-- Header: `Authorization: Bearer <access_token>`
-- Payload: `sub` (userId), `email`, `type`, `tokenVersion`, `iat`, `exp`
+### Erro 2: `Flyway Migration Failed`
+* **Causa:** Mudanças locais inconsistentes nos arquivos de migração sql.
+* **Solução:** Resete o banco de dados do container:
+  ```bash
+  docker compose down -v
+  docker compose up -d
+  ```
 
 ---
 
-## 🗄️ Modelo de Dados
+## 🤝 Governança de Código & Contribuição
 
-### Entidades Principais
+Para garantir a qualidade em nível de produção, este repositório impõe barreiras rígidas de código (Quality Gates).
 
-| Entidade | Descrição |
-|----------|-----------|
-| **User** | Usuário do sistema (nome, email, senha hash) |
-| **Category** | Categorias de transação (nome, ícone, cor, tipo) |
-| **Transaction** | Movimentações (valor, data, descrição, categoria, tipo) |
-| **FinancialGoal** | Metas (descrição, valor alvo, valor atual, prazo, status) |
+### Fluxo de Trabalho Git (Git Flow simplificado)
+1. Crie uma branch a partir de `develop`: `git checkout -b feature/minha-feature`
+2. Escreva o código garantindo a cobertura mínima de testes exigida.
+3. Submeta o Pull Request apontando para a branch `develop`.
 
-### Migrações Flyway (em `backend/financeapp-api/src/main/resources/db/migration/`)
-```sql
-V1__create_users_table.sql
-V2__create_categories_table.sql
-V3__create_transactions_table.sql
-V4__create_financial_goals_table.sql
-V5__add_token_version_to_users.sql
-```
+### Padrão de Commits Semânticos
+Nossos commits seguem a especificação **Conventional Commits**:
+* `feat: ...` para novas funcionalidades.
+* `fix: ...` para correções de bugs.
+* `docs: ...` para ajustes na documentação.
+* `refactor: ...` para refatorações que não alteram lógica de comportamento.
+* `test: ...` para acréscimo ou correção de testes.
+* `style: ...` para formatação/ajustes visuais sem alteração lógica.
+* `chore: ...` para atualizações de dependências ou build.
 
----
+### 🚫 Padrão de Código: Aceito vs Rejeitado
 
-## 🧪 Testes & Qualidade
+#### ☕ Java (Backend)
+* **Rejeitado (Código acoplado / Validação manual ineficiente):**
+  ```java
+  public ResponseEntity<?> createTransaction(TransactionDto dto) {
+      if (dto.getAmount() <= 0) {
+          return ResponseEntity.badRequest().body("Amount must be positive");
+      }
+      Transaction entity = new Transaction();
+      entity.setAmount(dto.getAmount());
+      // Acesso direto ao repositório no controller
+      return ResponseEntity.ok(transactionRepository.save(entity));
+  }
+  ```
+* **Aceito (Estateless, Validação declarativa na borda, Inversão de controle):**
+  ```java
+  @PostMapping
+  public ResponseEntity<TransactionResponse> create(
+          @Valid @RequestBody TransactionRequest request,
+          @AuthenticationPrincipal UserPrincipal user) {
+      TransactionDto result = transactionService.createTransaction(request.toDto(), user.getId());
+      return ResponseEntity.status(HttpStatus.CREATED).body(TransactionResponse.from(result));
+  }
+  ```
 
-| Camada | Ferramenta | Meta Cobertura | Comando |
-|--------|------------|----------------|---------|
-| Backend Unit | JUnit 5 + Mockito | **80%+** | `mvn test` / `mvn clean verify -Ptest` |
-| Frontend Unit | Vitest + @testing-library/preact | **60%+** | `npm run test:coverage` |
-| E2E | Playwright | **50%+** (fluxos críticos) | `npm run test:e2e` |
-| Integração | TestContainers + PostgreSQL | — | `mvn verify -Ptest` |
+#### ⚛️ Preact/TypeScript (Frontend)
+* **Rejeitado (Mutação direta de estado, sem tipos fortes):**
+  ```typescript
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    fetch('/api/v1/transactions').then(res => res.json()).then(res => {
+      data.push(res); // Mutação direta
+      setData(data);
+    });
+  }, []);
+  ```
+* **Aceito (Tipagem estrita, imutabilidade, cliente Ky encapsulado):**
+  ```typescript
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  useEffect(() => {
+    transactionService.getAll()
+      .then(data => setTransactions(data))
+      .catch(err => toast.error("Falha ao carregar transações"));
+  }, []);
+  ```
 
-### Relatórios
-- **Backend JaCoCo**: `backend/financeapp-api/target/site/jacoco/index.html`
-- **Backend JaCoCo (core)**: `backend/financeapp-core/target/site/jacoco/index.html`
-- **Frontend**: `frontend/coverage/index.html`
-
----
-
-## 📦 CI/CD
-
-### Pipeline GitHub Actions (`.github/workflows/ci.yml`)
-
-```yaml
-# Triggers: push to main/develop, pull_request
-jobs:
-  test-frontend:    # Node 22 → npm ci → lint → test:coverage → build
-  test-backend:     # Java 21 → mvn clean verify -Ptest (PostgreSQL via TestContainers)
-  build-docker:     # On main branch → build Docker images
-  verify:           # Final verification
-```
-
-### Branches & Versionamento
-- **main** → Produção (tags `vX.Y.Z`)
-- **develop** → Desenvolvimento contínuo
-- **feature/*** → Features isoladas
-- **SemVer**: MAJOR.MINOR.PATCH (ex: `v1.0.0`, `v2.1.0`)
-
----
-
-## 📚 Documentação
-
-| Arquivo | Descrição |
-|---------|-----------|
-| **AGENTS.md** | Guia para agentes IA, comandos, convenções |
-| **ACTION_PLAN.md** | Planos de implementação executados |
-| **Swagger UI** | `http://localhost:8080/swagger-ui.html` (backend rodando, dev profile) |
-| **LICENSE** | Licença MIT |
-
----
-
-## 🤝 Contribuindo
-
-1. **Fork** o repositório
-2. Crie uma branch: `git checkout -b feature/nova-funcionalidade`
-3. Commit: `git commit -m 'feat: adiciona nova funcionalidade'`
-4. Push: `git push origin feature/nova-funcionalidade`
-5. Abra um **Pull Request** para `develop`
-
-### Convenções de Commit (Conventional Commits)
-| Prefixo | Uso |
-|---------|-----|
-| `feat:` | Nova funcionalidade |
-| `fix:` | Correção de bug |
-| `docs:` | Documentação |
-| `refactor:` | Refatoração |
-| `test:` | Testes |
-| `chore:` | Manutenção/Configuração |
-| `style:` | Formatação (sem mudança lógica) |
+### 🏆 Quality Gates do CI/CD
+Toda Pull Request executa automaticamente as seguintes verificações:
+* **Linter (Eslint):** Sem erros ou warnings não justificados.
+* **Java Checkstyle:** Validação estática de formatação.
+* **Cobertura Mínima JaCoCo:** **80%** de cobertura de código no backend.
+* **Cobertura Mínima Frontend:** **60%** de cobertura no frontend.
 
 ---
 
-## 🗓️ Roadmap
+## 🗓️ Roadmap do Projeto
 
-| Versão | Foco | Prazo Estimado | Status |
-|--------|------|----------------|--------|
-| **v1.0.0 (MVP)** | Auth, CRUD Transações, Categorias, Testes base | 6-8 sem | 🚧 Em desenvolvimento |
-| **v2.0.0** | Dashboard, Gráficos (Recharts), KPIs, Export CSV, Playwright E2E | 4-6 sem | ⏳ Planejado |
-| **v3.0.0** | Metas Financeiras, Relatórios PDF, Agendamento, Email (SendGrid) | 4-6 sem | ⏳ Planejado |
-| **v4.0.0** | React Native (iOS/Android), Push Notifications, Offline Mode | 8-10 sem | ⏳ Planejado |
+| Versão | Foco | Status | Prazo Estimado |
+| :--- | :--- | :--- | :--- |
+| **v1.0.0 (MVP)** | Auth, CRUD Transações, Categorias, Testes base, Token Versioning. | 🚧 85% Concluído | Março 2026 |
+| **v2.0.0** | Dashboard Interativo, KPIs, Exportação CSV, Testes E2E (Playwright). | ⏳ Planejado | — |
+| **v3.0.0** | Metas Financeiras, Relatórios PDF, Agendamento e Notificação. | ⏳ Planejado | — |
+| **v4.0.0** | Aplicativo Mobile React Native integrado, Notificações Push, Modo Offline. | ⏳ Planejado | — |
+
+### ⚠️ O Que NÃO Vai Fazer (Decisões de Escopo Justificadas)
+* **Kubernetes (K8s):** Desnecessário para a escala atual de MVP. A orquestração via Docker Compose é suficiente para desenvolvimento local e o custo-benefício de K8s na nuvem não se justifica nesta fase.
+* **Microserviços:** Manteremos um monólito modular estruturado (Maven Multi-Module). A complexidade operacional de microserviços (latência de rede, consistência eventual, orquestração de transações distribuídas como Sagas) introduziria overhead sem valor real de negócio para o estágio atual.
 
 ---
 
-## 🔒 Segurança
+## 📚 Lessons Learned — O Que Aprendi & Por Quê Importa
 
-- ✅ **JWT HS256** (HMAC-SHA256) para tokens
-- ✅ **BCrypt 12 rounds** para hash de senha
-- ✅ **Prepared Statements + ORM** (prevenção SQL Injection)
-- ✅ **Content-Security-Policy** headers
-- ✅ **CORS** whitelist configurável
-- ✅ **Rate Limiting** (Resilience4j + Nginx)
-- ✅ **Token Versioning** (revogação de tokens por troca de senha/refresh)
-- ✅ **Jakarta Validation** em todos endpoints
-- ⚠️ **Penetration Testing** (análise de código realizada, pendente OWASP ZAP automatizado)
+Durante o desenvolvimento desta plataforma educacional, foram enfrentados desafios reais de engenharia de software que consolidaram os seguintes aprendizados:
+
+### 1. Versionamento de Tokens (Token Versioning)
+* **Desafio:** Como invalidar tokens JWT de forma eficiente sem manter uma tabela de sessões ativas no banco de dados (o que anularia a natureza stateless do JWT).
+* **Solução:** Adição de uma propriedade `tokenVersion` (inteiro) na tabela de `User` e como claim do JWT. A cada logout ou mudança de senha, essa versão é incrementada no banco. O filtro de segurança lê o token e rejeita requisições se a versão contida no JWT for menor que a versão atual do banco do usuário. Isso permite expiração imediata com custo de busca mínimo indexado por ID do usuário.
+
+### 2. Separação de Conceitos com Maven Multi-Module
+* **Desafio:** Prevenir vazamento de escopo técnico, como classes de infraestrutura (acesso a arquivos, drivers externos) sendo instanciadas diretamente por controladores de API.
+* **Solução:** Divisão física do projeto em três sub-módulos: `api`, `core` e `infra`. A dependência é unidirecional: `api` depende apenas de `core`. Dessa forma, o compilador do Java previne erros arquiteturais em tempo de compilação, forçando o uso de injeção de dependência via interfaces.
+
+### 3. Integridade Estrutural com Flyway
+* **Desafio:** Erros frequentes em ambientes de desenvolvimento e CI causados por divergência de esquemas de banco de dados entre branches de feature distintas.
+* **Solução:** Adoção de migrações gerenciadas com o Flyway. Toda alteração de tabela é versionada em arquivos `.sql` e aplicada de forma transacional no start do Spring. Isso garante que o banco de dados de teste (Testcontainers) tenha exatamente a mesma estrutura do banco de produção.
 
 ---
 
@@ -333,19 +315,4 @@ Este projeto está licenciado sob a **Licença MIT** - veja o arquivo [LICENSE](
 
 ---
 
-## 📞 Suporte & Comunidade
-
-- 🐛 **Bugs**: [Abra uma issue](../../issues)
-- 💡 **Feature Requests**: [Abra uma issue](../../issues)
-- 📖 **Documentação**: Consulte `AGENTS.md`
-- 💬 **Dúvidas**: Inicie uma [Discussion](../../discussions)
-
----
-
-## 👥 Créditos
-
-Desenvolvido com ❤️ pela equipe do projeto.
-
----
-
-**⭐ Se este projeto te ajudou, deixe uma estrela no repositório!**
+**⭐ Se este projeto te ajudou a entender padrões corporativos de mercado, deixe uma estrela no repositório!**

@@ -31,6 +31,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <springdoc.version>2.5.0</springdoc.version>
         <testcontainers.version>1.19.8</testcontainers.version>
+        <lombok.version>1.18.46</lombok.version>
+        <argLine>-Dnet.bytebuddy.experimental=true</argLine>
     </properties>
 
     <dependencyManagement>
@@ -81,6 +83,19 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>

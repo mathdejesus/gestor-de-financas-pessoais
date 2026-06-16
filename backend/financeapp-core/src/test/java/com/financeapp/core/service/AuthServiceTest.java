@@ -44,8 +44,8 @@ class AuthServiceTest {
             user.setId(1L);
             return user;
         });
-        when(jwtUtil.generateAccessToken(1L, "john@email.com")).thenReturn("access_token");
-        when(jwtUtil.generateRefreshToken(1L, "john@email.com")).thenReturn("refresh_token");
+        when(jwtUtil.generateAccessToken(1L, "john@email.com", 0)).thenReturn("access_token");
+        when(jwtUtil.generateRefreshToken(1L, "john@email.com", 0)).thenReturn("refresh_token");
 
         AuthResponse response = authService.register(request);
 
@@ -78,8 +78,8 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail("john@email.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed_password")).thenReturn(true);
-        when(jwtUtil.generateAccessToken(1L, "john@email.com")).thenReturn("access_token");
-        when(jwtUtil.generateRefreshToken(1L, "john@email.com")).thenReturn("refresh_token");
+        when(jwtUtil.generateAccessToken(1L, "john@email.com", 0)).thenReturn("access_token");
+        when(jwtUtil.generateRefreshToken(1L, "john@email.com", 0)).thenReturn("refresh_token");
 
         AuthResponse response = authService.login(request);
 
