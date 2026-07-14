@@ -1,7 +1,8 @@
 import ky from 'ky';
 import type { BeforeRequestHook, AfterResponseHook } from 'ky';
+import type { UserProfile, UpdateProfileRequest, ChangePasswordRequest, ReportResponse } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
 /**
  * Attaches the JWT access token to every outgoing request.
@@ -30,6 +31,23 @@ const unauthorizedHook: AfterResponseHook = async ({ response }) => {
   return response;
 };
 
+export const api = ky.create({
+  prefixUrl: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  hooks: {
+    beforeRequest: [authHook],
+    afterResponse: [unauthorizedHook],
+  },
+  retry: {
+    limit: 2,
+    methods: ['GET', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
+    statusCodes: [408, 413, 429, 500, 502, 503, 504],
+  },
+  timeout: 30000,
+});
+
 /**
  * Auth-specific API wrapper that calls auth endpoints.
  * Returns responses wrapped in { data } to match the expected format
@@ -46,23 +64,34 @@ export const authApi = {
       .post('auth/register', { json: body })
       .json<any>()
       .then(data => ({ data })),
+  getProfile: () =>
+    api
+      .get('auth/profile')
+      .json<UserProfile>()
+      .then(data => ({ data })),
+  updateProfile: (body: UpdateProfileRequest) =>
+    api
+      .put('auth/profile', { json: body })
+      .json<UserProfile>()
+      .then(data => ({ data })),
+  changePassword: (body: ChangePasswordRequest) =>
+    api.post('auth/change-password', { json: body }).json<void>(),
 };
 
-export const api = ky.create({
-  prefix: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
+/**
+ * Report API wrapper for financial report generation.
+ */
+export const reportApi = {
+  generateFinancialReport: (params?: { startDate?: string; endDate?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.startDate) searchParams.set('startDate', params.startDate);
+    if (params?.endDate) searchParams.set('endDate', params.endDate);
+    const query = searchParams.toString();
+    return api
+      .get(`reports/financial${query ? `?${query}` : ''}`)
+      .json<ReportResponse>()
+      .then(data => ({ data }));
   },
-  hooks: {
-    beforeRequest: [authHook],
-    afterResponse: [unauthorizedHook],
-  },
-  retry: {
-    limit: 2,
-    methods: ['GET', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
-    statusCodes: [408, 413, 429, 500, 502, 503, 504],
-  },
-  timeout: 30000,
-});
+};
 
 export type { KyInstance } from 'ky';

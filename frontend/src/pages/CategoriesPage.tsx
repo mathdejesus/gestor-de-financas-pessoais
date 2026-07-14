@@ -1,37 +1,35 @@
-import { useState } from 'react';
+import { useState } from 'preact/hooks';
 import { useCategories } from '../hooks/useCategories';
-import type { Category, CreateCategoryRequest } from '../types';
+import type { CategoryResponse, CategoryRequest } from '../types';
 
 export function CategoriesPage() {
-  const { categories, isLoading, error, createCategory, updateCategory, deleteCategory } =
+  const { categories, loading, error, createCategory, updateCategory, deleteCategory } =
     useCategories();
   const [showForm, setShowForm] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState<CreateCategoryRequest>({
+  const [editingCategory, setEditingCategory] = useState<CategoryResponse | null>(null);
+  const [formData, setFormData] = useState<CategoryRequest>({
     name: '',
-    icon: '',
     color: '#3B82F6',
   });
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = () => {
-    setFormData({ name: '', icon: '', color: '#3B82F6' });
+    setFormData({ name: '', color: '#3B82F6' });
     setEditingCategory(null);
     setFormError('');
   };
 
-  const handleEdit = (category: Category) => {
+  const handleEdit = (category: CategoryResponse) => {
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      icon: category.icon || '',
       color: category.color || '#3B82F6',
     });
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: Event) => {
     e.preventDefault();
     setFormError('');
     setIsSubmitting(true);
@@ -45,22 +43,22 @@ export function CategoriesPage() {
       setShowForm(false);
       resetForm();
     } catch (err: any) {
-      setFormError(err.response?.data?.error || 'Operation failed');
+      setFormError(err?.message || 'Operation failed');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this category?')) {
       await deleteCategory(id);
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading categories...</div>
+        <div className="text-gray-500">Carregando categorias...</div>
       </div>
     );
   }
@@ -68,7 +66,7 @@ export function CategoriesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Categorias</h1>
         <button
           onClick={() => {
             resetForm();
@@ -76,7 +74,7 @@ export function CategoriesPage() {
           }}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
         >
-          Add Category
+          Adicionar Categoria
         </button>
       </div>
 
@@ -89,7 +87,7 @@ export function CategoriesPage() {
       {showForm && (
         <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
           <h2 className="text-lg font-semibold mb-4">
-            {editingCategory ? 'Edit Category' : 'New Category'}
+            {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
           </h2>
           {formError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
@@ -97,34 +95,24 @@ export function CategoriesPage() {
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <label className="block text-sm font-medium text-gray-700">Nome</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  onInput={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g. Food, Transport"
+                  placeholder="Ex: Alimentação, Transporte"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Icon</label>
-                <input
-                  type="text"
-                  value={formData.icon || ''}
-                  onChange={e => setFormData({ ...formData, icon: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g. utensils, car"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Color</label>
+                <label className="block text-sm font-medium text-gray-700">Cor</label>
                 <input
                   type="color"
                   value={formData.color || '#3B82F6'}
-                  onChange={e => setFormData({ ...formData, color: e.target.value })}
+                  onInput={(e) => setFormData({ ...formData, color: (e.target as HTMLInputElement).value })}
                   className="mt-1 block w-full h-10 px-1 py-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -135,7 +123,7 @@ export function CategoriesPage() {
                 disabled={isSubmitting}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
               >
-                {isSubmitting ? 'Saving...' : editingCategory ? 'Update' : 'Create'}
+                {isSubmitting ? 'Salvando...' : editingCategory ? 'Atualizar' : 'Criar'}
               </button>
               <button
                 type="button"
@@ -145,7 +133,7 @@ export function CategoriesPage() {
                 }}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium"
               >
-                Cancel
+                Cancelar
               </button>
             </div>
           </form>
@@ -154,7 +142,7 @@ export function CategoriesPage() {
 
       {categories.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          No categories yet. Click "Add Category" to get started.
+          Nenhuma categoria ainda. Clique em "Adicionar Categoria" para começar.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -172,7 +160,6 @@ export function CategoriesPage() {
                 )}
                 <div>
                   <p className="font-medium text-gray-900">{category.name}</p>
-                  {category.icon && <p className="text-xs text-gray-500">{category.icon}</p>}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -180,13 +167,13 @@ export function CategoriesPage() {
                   onClick={() => handleEdit(category)}
                   className="text-blue-600 hover:text-blue-800 text-sm"
                 >
-                  Edit
+                  Editar
                 </button>
                 <button
                   onClick={() => handleDelete(category.id)}
                   className="text-red-600 hover:text-red-800 text-sm"
                 >
-                  Delete
+                  Excluir
                 </button>
               </div>
             </div>

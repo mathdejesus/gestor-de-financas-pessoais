@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'preact/hooks';
 import { useReports } from '../hooks/useReports';
 import { format } from 'date-fns';
+import type { CategoryReportItem, MonthlyReportItem } from '../types';
 
 export function ReportsPage() {
   const { report, loading, error, generateReport } = useReports();
@@ -47,7 +48,7 @@ export function ReportsPage() {
             <input
               type="date"
               value={startDate}
-              onChange={e => setStartDate(e.target.value)}
+              onInput={(e) => setStartDate((e.target as HTMLInputElement).value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -56,7 +57,7 @@ export function ReportsPage() {
             <input
               type="date"
               value={endDate}
-              onChange={e => setEndDate(e.target.value)}
+              onInput={(e) => setEndDate((e.target as HTMLInputElement).value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -116,7 +117,7 @@ export function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {report.byCategory.map((item, index) => (
+                  {report.byCategory.map((item: CategoryReportItem, index: number) => (
                     <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">{item.categoryName}</td>
                       <td className="py-3 px-4">
@@ -147,7 +148,7 @@ export function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {report.byMonth.map((item, index) => (
+                  {report.byMonth.map((item: MonthlyReportItem, index: number) => (
                     <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">{item.month}</td>
                       <td className="py-3 px-4 text-right text-green-600">{formatCurrency(item.income)}</td>

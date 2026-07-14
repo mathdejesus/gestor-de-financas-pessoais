@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from 'preact/hooks';
 import { reportApi } from '../services/api';
 import type { ReportResponse } from '../types';
 
@@ -14,7 +14,7 @@ export function useReports() {
       const { data } = await reportApi.generateFinancialReport({ startDate, endDate });
       setReport(data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to generate report');
+      setError(err?.message || 'Falha ao gerar relatório');
     } finally {
       setLoading(false);
     }

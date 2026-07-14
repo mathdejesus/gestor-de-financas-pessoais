@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState } from 'preact/hooks';
 import { useTransactions } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
-import type { Transaction, CreateTransactionRequest } from '../types';
+import type { Transaction, TransactionRequest } from '../types';
 
 export function TransactionsPage() {
   const {
     transactions,
-    isLoading,
+    loading,
     error,
     createTransaction,
     updateTransaction,
@@ -15,7 +15,7 @@ export function TransactionsPage() {
   const { categories } = useCategories();
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [formData, setFormData] = useState<CreateTransactionRequest>({
+  const [formData, setFormData] = useState<TransactionRequest>({
     description: '',
     amount: 0,
     transactionType: 'EXPENSE',
@@ -44,12 +44,12 @@ export function TransactionsPage() {
       amount: transaction.amount,
       transactionType: transaction.transactionType,
       transactionDate: transaction.transactionDate,
-      categoryId: transaction.categoryId,
+      categoryId: transaction.categoryId ?? null,
     });
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: Event) => {
     e.preventDefault();
     setFormError('');
     setIsSubmitting(true);
@@ -63,25 +63,25 @@ export function TransactionsPage() {
       setShowForm(false);
       resetForm();
     } catch (err: any) {
-      setFormError(err.response?.data?.error || 'Operation failed');
+      setFormError(err?.message || 'Operation failed');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this transaction?')) {
       await deleteTransaction(id);
     }
   };
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading transactions...</div>
+        <div className="text-gray-500">Carregando transações...</div>
       </div>
     );
   }
@@ -89,7 +89,7 @@ export function TransactionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Transações</h1>
         <button
           onClick={() => {
             resetForm();
@@ -97,7 +97,7 @@ export function TransactionsPage() {
           }}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
         >
-          Add Transaction
+          Adicionar Transação
         </button>
       </div>
 
@@ -110,7 +110,7 @@ export function TransactionsPage() {
       {showForm && (
         <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
           <h2 className="text-lg font-semibold mb-4">
-            {editingTransaction ? 'Edit Transaction' : 'New Transaction'}
+            {editingTransaction ? 'Editar Transação' : 'Nova Transação'}
           </h2>
           {formError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
@@ -120,67 +120,67 @@ export function TransactionsPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className="block text-sm font-medium text-gray-700">Descrição</label>
                 <input
                   type="text"
                   value={formData.description}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  onInput={(e) => setFormData({ ...formData, description: (e.target as HTMLInputElement).value })}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Amount</label>
+                <label className="block text-sm font-medium text-gray-700">Valor</label>
                 <input
                   type="number"
                   step="0.01"
                   min="0.01"
                   required
                   value={formData.amount || ''}
-                  onChange={e =>
-                    setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
+                  onInput={(e) =>
+                    setFormData({ ...formData, amount: parseFloat((e.target as HTMLInputElement).value) || 0 })
                   }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Type</label>
+                <label className="block text-sm font-medium text-gray-700">Tipo</label>
                 <select
                   value={formData.transactionType}
-                  onChange={e =>
+                  onChange={(e) =>
                     setFormData({
                       ...formData,
-                      transactionType: e.target.value as 'INCOME' | 'EXPENSE',
+                      transactionType: (e.target as HTMLSelectElement).value as 'INCOME' | 'EXPENSE',
                     })
                   }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="EXPENSE">Expense</option>
-                  <option value="INCOME">Income</option>
+                  <option value="EXPENSE">Despesa</option>
+                  <option value="INCOME">Receita</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Date</label>
+                <label className="block text-sm font-medium text-gray-700">Data</label>
                 <input
                   type="date"
                   required
                   value={formData.transactionDate}
-                  onChange={e => setFormData({ ...formData, transactionDate: e.target.value })}
+                  onInput={(e) => setFormData({ ...formData, transactionDate: (e.target as HTMLInputElement).value })}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Category</label>
+                <label className="block text-sm font-medium text-gray-700">Categoria</label>
                 <select
                   value={formData.categoryId || ''}
-                  onChange={e =>
+                  onChange={(e) =>
                     setFormData({
                       ...formData,
-                      categoryId: e.target.value ? Number(e.target.value) : null,
+                      categoryId: (e.target as HTMLSelectElement).value || null,
                     })
                   }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">No category</option>
+                  <option value="">Sem categoria</option>
                   {categories.map(cat => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -195,7 +195,7 @@ export function TransactionsPage() {
                 disabled={isSubmitting}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
               >
-                {isSubmitting ? 'Saving...' : editingTransaction ? 'Update' : 'Create'}
+                {isSubmitting ? 'Salvando...' : editingTransaction ? 'Atualizar' : 'Criar'}
               </button>
               <button
                 type="button"
@@ -205,7 +205,7 @@ export function TransactionsPage() {
                 }}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium"
               >
-                Cancel
+                Cancelar
               </button>
             </div>
           </form>
@@ -214,7 +214,7 @@ export function TransactionsPage() {
 
       {transactions.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          No transactions yet. Click "Add Transaction" to get started.
+          Nenhuma transação ainda. Clique em "Adicionar Transação" para começar.
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
@@ -222,22 +222,22 @@ export function TransactionsPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Date
+                  Data
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Description
+                  Descrição
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Category
+                  Categoria
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Type
+                  Tipo
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                  Amount
+                  Valor
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                  Actions
+                  Ações
                 </th>
               </tr>
             </thead>
@@ -246,7 +246,7 @@ export function TransactionsPage() {
                 <tr key={t.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm text-gray-900">{t.transactionDate}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{t.description || '-'}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{t.categoryName || '-'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{t.category?.name || '-'}</td>
                   <td className="px-6 py-4 text-sm">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -255,7 +255,7 @@ export function TransactionsPage() {
                           : 'bg-red-100 text-red-800'
                       }`}
                     >
-                      {t.transactionType}
+                      {t.transactionType === 'INCOME' ? 'Receita' : 'Despesa'}
                     </span>
                   </td>
                   <td
@@ -271,13 +271,13 @@ export function TransactionsPage() {
                       onClick={() => handleEdit(t)}
                       className="text-blue-600 hover:text-blue-800"
                     >
-                      Edit
+                      Editar
                     </button>
                     <button
                       onClick={() => handleDelete(t.id)}
                       className="text-red-600 hover:text-red-800"
                     >
-                      Delete
+                      Excluir
                     </button>
                   </td>
                 </tr>

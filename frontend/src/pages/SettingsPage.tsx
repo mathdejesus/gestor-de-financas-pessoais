@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/api';
@@ -26,7 +26,7 @@ export function SettingsPage() {
       setProfile(data);
       setFormData({ name: data.name, email: data.email });
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro ao carregar perfil');
+      setError(err?.message || 'Erro ao carregar perfil');
     } finally {
       setLoading(false);
     }
@@ -36,7 +36,7 @@ export function SettingsPage() {
     loadProfile();
   }, [loadProfile]);
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: Event) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
@@ -45,13 +45,13 @@ export function SettingsPage() {
       setProfile(data);
       setEditing(false);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro ao atualizar perfil');
+      setError(err?.message || 'Erro ao atualizar perfil');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
+  const handleChangePassword = async (e: Event) => {
     e.preventDefault();
     setChangingPassword(true);
     setPasswordError(null);
@@ -61,7 +61,7 @@ export function SettingsPage() {
       setPasswordSuccess('Senha alterada com sucesso!');
       setPasswordForm({ currentPassword: '', newPassword: '' });
     } catch (err: any) {
-      setPasswordError(err.response?.data?.error || 'Erro ao alterar senha');
+      setPasswordError(err?.message || 'Erro ao alterar senha');
     } finally {
       setChangingPassword(false);
     }
@@ -132,7 +132,7 @@ export function SettingsPage() {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  onInput={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -142,7 +142,7 @@ export function SettingsPage() {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={e => setFormData({ ...formData, email: e.target.value })}
+                  onInput={(e) => setFormData({ ...formData, email: (e.target as HTMLInputElement).value })}
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -167,7 +167,7 @@ export function SettingsPage() {
               <input
                 type="password"
                 value={passwordForm.currentPassword}
-                onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                onInput={(e) => setPasswordForm({ ...passwordForm, currentPassword: (e.target as HTMLInputElement).value })}
                 placeholder="Digite sua senha atual"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
@@ -178,7 +178,7 @@ export function SettingsPage() {
               <input
                 type="password"
                 value={passwordForm.newPassword}
-                onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                onInput={(e) => setPasswordForm({ ...passwordForm, newPassword: (e.target as HTMLInputElement).value })}
                 placeholder="Digite sua nova senha (mín. 8 caracteres)"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required

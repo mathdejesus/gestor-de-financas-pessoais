@@ -1,138 +1,90 @@
-import { useState } from "preact/hooks";
-import { useAuth } from "../hooks/useAuth";
+import { useState } from 'preact/hooks';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-export default function LoginPage() {
-  const { setToken, setUser } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    name: "",
-  });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleInput = (field: string) => (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    setFormData((prev) => ({ ...prev, [field]: target.value }));
-    setError("");
-  };
+export function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-
+    setError('');
+    setIsSubmitting(true);
     try {
-      const endpoint = isLogin ? "auth/login" : "auth/register";
-      const data = isLogin
-        ? { email: formData.email, password: formData.password }
-        : {
-            email: formData.email,
-            password: formData.password,
-            name: formData.name,
-          };
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:8080/api"}/${endpoint}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || "Erro ao autenticar");
-      }
-
-      const result = await response.json();
-      localStorage.setItem("token", result.token);
-      localStorage.setItem("user", JSON.stringify(result.user));
-      setToken(result.token);
-      setUser(result.user);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro desconhecido");
+      await login(email, password);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err?.message || 'Falha ao entrar');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setError("");
-    setFormData({ email: "", password: "", name: "" });
-  };
-
   return (
-    <div class="auth-page">
-      <div class="auth-card card">
-        <div class="auth-header">
-          <h1>💰 Finanças Pessoais</h1>
-          <p>{isLogin ? "Entre na sua conta" : "Crie sua conta"}</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold text-center text-gray-900">💰 FinanceApp</h1>
+          <h2 className="mt-2 text-center text-sm text-gray-600">Entre na sua conta</h2>
         </div>
-
-        {error && <div class="error-message">{error}</div>}
-
-        <form onSubmit={handleSubmit} class="auth-form">
-          {!isLogin && (
-            <div class="form-group">
-              <label htmlFor="name">Nome *</label>
-              <input
-                type="text"
-                id="name"
-                value={formData.name}
-                onChange={handleInput("name")}
-                placeholder="Seu nome"
-                required={!isLogin}
-                autoFocus={!isLogin}
-              />
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
             </div>
           )}
-
-          <div class="form-group">
-            <label htmlFor="email">Email *</label>
-            <input
-              type="email"
-              id="email"
-              value={formData.email}
-              onChange={handleInput("email")}
-              placeholder="seu@email.com"
-              required
-              autoFocus={isLogin}
-            />
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="voce@exemplo.com"
+                autoFocus
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Senha
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="••••••••"
+              />
+            </div>
           </div>
-
-          <div class="form-group">
-            <label htmlFor="password">Senha *</label>
-            <input
-              type="password"
-              id="password"
-              value={formData.password}
-              onChange={handleInput("password")}
-              placeholder="••••••••"
-              required
-              minLength={6}
-            />
-          </div>
-
           <button
             type="submit"
-            class="btn btn-primary btn-block"
-            disabled={loading}
+            disabled={isSubmitting}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {loading ? "⏳ Aguarde..." : isLogin ? "Entrar" : "Cadastrar"}
+            {isSubmitting ? 'Entrando...' : 'Entrar'}
           </button>
+          <p className="text-center text-sm text-gray-600">
+            Não tem uma conta?{' '}
+            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+              Cadastrar
+            </Link>
+          </p>
         </form>
-
-        <p class="auth-toggle">
-          {isLogin ? "Não tem conta?" : "Já tem conta?"}
-          <button type="button" class="link-btn" onClick={toggleMode}>
-            {isLogin ? "Cadastrar" : "Entrar"}
-          </button>
-        </p>
       </div>
     </div>
   );
 }
+
+export default LoginPage;
