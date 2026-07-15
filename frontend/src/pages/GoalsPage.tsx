@@ -91,7 +91,7 @@ export function GoalsPage() {
         <div className="flex items-center gap-3">
           <select
             value={filter}
-            onChange={(e) => setFilter((e.target as HTMLSelectElement).value)}
+            onChange={e => setFilter((e.target as HTMLSelectElement).value)}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
           >
             <option value="">Todas</option>
@@ -119,7 +119,9 @@ export function GoalsPage() {
 
       {showForm && (
         <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h2 className="text-lg font-semibold mb-4">{editingGoal ? 'Editar Meta' : 'Nova Meta'}</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            {editingGoal ? 'Editar Meta' : 'Nova Meta'}
+          </h2>
           {formError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
               {formError}
@@ -133,7 +135,9 @@ export function GoalsPage() {
                   type="text"
                   required
                   value={formData.name}
-                  onInput={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
+                  onInput={e =>
+                    setFormData({ ...formData, name: (e.target as HTMLInputElement).value })
+                  }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Ex: Reserva de emergência, Férias, Carro novo"
                 />
@@ -143,7 +147,9 @@ export function GoalsPage() {
                 <input
                   type="text"
                   value={formData.description || ''}
-                  onInput={(e) => setFormData({ ...formData, description: (e.target as HTMLInputElement).value })}
+                  onInput={e =>
+                    setFormData({ ...formData, description: (e.target as HTMLInputElement).value })
+                  }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Descrição opcional"
                 />
@@ -156,8 +162,11 @@ export function GoalsPage() {
                   min="0.01"
                   required
                   value={formData.targetAmount || ''}
-                  onInput={(e) =>
-                    setFormData({ ...formData, targetAmount: parseFloat((e.target as HTMLInputElement).value) || 0 })
+                  onInput={e =>
+                    setFormData({
+                      ...formData,
+                      targetAmount: parseFloat((e.target as HTMLInputElement).value) || 0,
+                    })
                   }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -168,7 +177,9 @@ export function GoalsPage() {
                   type="date"
                   required
                   value={formData.targetDate}
-                  onInput={(e) => setFormData({ ...formData, targetDate: (e.target as HTMLInputElement).value })}
+                  onInput={e =>
+                    setFormData({ ...formData, targetDate: (e.target as HTMLInputElement).value })
+                  }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -210,9 +221,7 @@ export function GoalsPage() {
                 <h3 className="font-semibold text-gray-900 truncate flex-1">{goal.name}</h3>
                 <span
                   className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ml-2 ${
-                    goal.completed
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-blue-100 text-blue-800'
+                    goal.completed ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
                   }`}
                 >
                   {goal.completed ? 'Concluída' : 'Ativa'}
@@ -222,7 +231,9 @@ export function GoalsPage() {
               <div className="mb-3">
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-500">Progresso</span>
-                  <span className="font-medium text-gray-900">{goal.progressPercentage.toFixed(0)}%</span>
+                  <span className="font-medium text-gray-900">
+                    {goal.progressPercentage.toFixed(0)}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div

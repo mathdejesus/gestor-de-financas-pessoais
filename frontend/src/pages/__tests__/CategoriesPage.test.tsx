@@ -31,7 +31,7 @@ describe('CategoriesPage', () => {
         <AuthProvider>
           <CategoriesPage />
         </AuthProvider>
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText('Categorias')).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe('CategoriesPage', () => {
         <AuthProvider>
           <CategoriesPage />
         </AuthProvider>
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText('Adicionar Categoria')).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe('CategoriesPage', () => {
         <AuthProvider>
           <CategoriesPage />
         </AuthProvider>
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText(/Nenhuma categoria/)).toBeInTheDocument();

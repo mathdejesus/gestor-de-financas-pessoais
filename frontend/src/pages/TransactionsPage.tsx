@@ -4,14 +4,8 @@ import { useCategories } from '../hooks/useCategories';
 import type { Transaction, TransactionRequest } from '../types';
 
 export function TransactionsPage() {
-  const {
-    transactions,
-    loading,
-    error,
-    createTransaction,
-    updateTransaction,
-    deleteTransaction,
-  } = useTransactions();
+  const { transactions, loading, error, createTransaction, updateTransaction, deleteTransaction } =
+    useTransactions();
   const { categories } = useCategories();
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -124,7 +118,9 @@ export function TransactionsPage() {
                 <input
                   type="text"
                   value={formData.description}
-                  onInput={(e) => setFormData({ ...formData, description: (e.target as HTMLInputElement).value })}
+                  onInput={e =>
+                    setFormData({ ...formData, description: (e.target as HTMLInputElement).value })
+                  }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -136,8 +132,11 @@ export function TransactionsPage() {
                   min="0.01"
                   required
                   value={formData.amount || ''}
-                  onInput={(e) =>
-                    setFormData({ ...formData, amount: parseFloat((e.target as HTMLInputElement).value) || 0 })
+                  onInput={e =>
+                    setFormData({
+                      ...formData,
+                      amount: parseFloat((e.target as HTMLInputElement).value) || 0,
+                    })
                   }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -146,10 +145,11 @@ export function TransactionsPage() {
                 <label className="block text-sm font-medium text-gray-700">Tipo</label>
                 <select
                   value={formData.transactionType}
-                  onChange={(e) =>
+                  onChange={e =>
                     setFormData({
                       ...formData,
-                      transactionType: (e.target as HTMLSelectElement).value as 'INCOME' | 'EXPENSE',
+                      transactionType: (e.target as HTMLSelectElement).value as
+                        'INCOME' | 'EXPENSE',
                     })
                   }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -164,7 +164,12 @@ export function TransactionsPage() {
                   type="date"
                   required
                   value={formData.transactionDate}
-                  onInput={(e) => setFormData({ ...formData, transactionDate: (e.target as HTMLInputElement).value })}
+                  onInput={e =>
+                    setFormData({
+                      ...formData,
+                      transactionDate: (e.target as HTMLInputElement).value,
+                    })
+                  }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -172,7 +177,7 @@ export function TransactionsPage() {
                 <label className="block text-sm font-medium text-gray-700">Categoria</label>
                 <select
                   value={formData.categoryId || ''}
-                  onChange={(e) =>
+                  onChange={e =>
                     setFormData({
                       ...formData,
                       categoryId: (e.target as HTMLSelectElement).value || null,

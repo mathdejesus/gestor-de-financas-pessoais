@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* Solarized Dark (default) */
@@ -34,7 +34,7 @@
 }
 
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
+  :root:not([data-theme='dark']) {
     --color-bg-primary: var(--color-base3);
     --color-bg-secondary: var(--color-base2);
     --color-fg-primary: var(--color-base00);
@@ -44,7 +44,7 @@
   }
 }
 
-[data-theme="light"] {
+[data-theme='light'] {
   --color-bg-primary: var(--color-base3);
   --color-bg-secondary: var(--color-base2);
   --color-fg-primary: var(--color-base00);
@@ -63,8 +63,7 @@ body {
   background-color: var(--color-bg-primary);
   color: var(--color-fg-primary);
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-    Cantarell, sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.5;
   transition:
     background-color 0.3s ease,

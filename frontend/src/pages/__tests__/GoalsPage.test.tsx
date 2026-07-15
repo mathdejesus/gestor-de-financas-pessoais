@@ -44,7 +44,7 @@ describe('GoalsPage', () => {
     render(
       <BrowserRouter>
         <GoalsPage />
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText('Metas Financeiras')).toBeInTheDocument();
@@ -54,7 +54,7 @@ describe('GoalsPage', () => {
     render(
       <BrowserRouter>
         <GoalsPage />
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText('Viagem')).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('GoalsPage', () => {
     render(
       <BrowserRouter>
         <GoalsPage />
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText('Adicionar Meta')).toBeInTheDocument();

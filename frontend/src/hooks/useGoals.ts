@@ -1,6 +1,6 @@
-import { useState, useCallback } from "preact/hooks";
-import { api } from "../services/api";
-import type { FinancialGoalResponse, FinancialGoalRequest } from "../types";
+import { useState, useCallback } from 'preact/hooks';
+import { api } from '../services/api';
+import type { FinancialGoalResponse, FinancialGoalRequest } from '../types';
 
 interface UseGoalsReturn {
   goals: FinancialGoalResponse[];
@@ -10,10 +10,7 @@ interface UseGoalsReturn {
   fetchActiveGoals: () => Promise<void>;
   fetchExpiredGoals: () => Promise<void>;
   createGoal: (data: FinancialGoalRequest) => Promise<FinancialGoalResponse>;
-  updateGoal: (
-    id: string,
-    data: FinancialGoalRequest,
-  ) => Promise<FinancialGoalResponse>;
+  updateGoal: (id: string, data: FinancialGoalRequest) => Promise<FinancialGoalResponse>;
   deleteGoal: (id: string) => Promise<void>;
   addProgress: (id: string, amount: number) => Promise<FinancialGoalResponse>;
 }
@@ -27,12 +24,10 @@ export function useGoals(): UseGoalsReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await api
-        .get("goals?size=100")
-        .json<{ content: FinancialGoalResponse[] }>();
+      const response = await api.get('goals?size=100').json<{ content: FinancialGoalResponse[] }>();
       setGoals(response.content);
     } catch (err) {
-      setError("Erro ao carregar metas");
+      setError('Erro ao carregar metas');
       console.error(err);
     } finally {
       setLoading(false);
@@ -43,12 +38,10 @@ export function useGoals(): UseGoalsReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await api
-        .get("goals/active")
-        .json<FinancialGoalResponse[]>();
+      const response = await api.get('goals/active').json<FinancialGoalResponse[]>();
       setGoals(response);
     } catch (err) {
-      setError("Erro ao carregar metas ativas");
+      setError('Erro ao carregar metas ativas');
       console.error(err);
     } finally {
       setLoading(false);
@@ -59,12 +52,10 @@ export function useGoals(): UseGoalsReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await api
-        .get("goals/expired")
-        .json<FinancialGoalResponse[]>();
+      const response = await api.get('goals/expired').json<FinancialGoalResponse[]>();
       setGoals(response);
     } catch (err) {
-      setError("Erro ao carregar metas expiradas");
+      setError('Erro ao carregar metas expiradas');
       console.error(err);
     } finally {
       setLoading(false);
@@ -72,34 +63,27 @@ export function useGoals(): UseGoalsReturn {
   }, []);
 
   const createGoal = useCallback(async (data: FinancialGoalRequest) => {
-    const response = await api
-      .post("goals", { json: data })
-      .json<FinancialGoalResponse>();
-    setGoals((prev) => [...prev, response]);
+    const response = await api.post('goals', { json: data }).json<FinancialGoalResponse>();
+    setGoals(prev => [...prev, response]);
     return response;
   }, []);
 
-  const updateGoal = useCallback(
-    async (id: string, data: FinancialGoalRequest) => {
-      const response = await api
-        .put(`goals/${id}`, { json: data })
-        .json<FinancialGoalResponse>();
-      setGoals((prev) => prev.map((g) => (g.id === id ? response : g)));
-      return response;
-    },
-    [],
-  );
+  const updateGoal = useCallback(async (id: string, data: FinancialGoalRequest) => {
+    const response = await api.put(`goals/${id}`, { json: data }).json<FinancialGoalResponse>();
+    setGoals(prev => prev.map(g => (g.id === id ? response : g)));
+    return response;
+  }, []);
 
   const deleteGoal = useCallback(async (id: string) => {
     await api.delete(`goals/${id}`);
-    setGoals((prev) => prev.filter((g) => g.id !== id));
+    setGoals(prev => prev.filter(g => g.id !== id));
   }, []);
 
   const addProgress = useCallback(async (id: string, amount: number) => {
     const response = await api
       .post(`goals/${id}/progress?amount=${amount}`)
       .json<FinancialGoalResponse>();
-    setGoals((prev) => prev.map((g) => (g.id === id ? response : g)));
+    setGoals(prev => prev.map(g => (g.id === id ? response : g)));
     return response;
   }, []);
 

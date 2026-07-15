@@ -39,7 +39,7 @@ describe('DashboardPage', () => {
         <AuthProvider>
           <DashboardPage />
         </AuthProvider>
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText('Dashboard')).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe('DashboardPage', () => {
         <AuthProvider>
           <DashboardPage />
         </AuthProvider>
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText('Receitas do Mês')).toBeInTheDocument();

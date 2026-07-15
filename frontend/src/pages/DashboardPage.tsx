@@ -1,9 +1,9 @@
-import { useState, useEffect } from "preact/hooks";
-import { useAuth } from "../hooks/useAuth";
-import { useTransactions } from "../hooks/useTransactions";
-import { formatCurrency } from "../utils/currency";
-import ChatbotPanel from "../components/ChatbotPanel";
-import type { DashboardResponse, AiExtractResponse } from "../types";
+import { useState, useEffect } from 'preact/hooks';
+import { useAuth } from '../hooks/useAuth';
+import { useTransactions } from '../hooks/useTransactions';
+import { formatCurrency } from '../utils/currency';
+import ChatbotPanel from '../components/ChatbotPanel';
+import type { DashboardResponse, AiExtractResponse } from '../types';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -24,8 +24,8 @@ export default function DashboardPage() {
 
       // Fetch by category
       const [expenseByCategory, incomeByCategory] = await Promise.all([
-        fetchByCategory("EXPENSE"),
-        fetchByCategory("INCOME"),
+        fetchByCategory('EXPENSE'),
+        fetchByCategory('INCOME'),
       ]);
 
       setDashboard({
@@ -35,24 +35,24 @@ export default function DashboardPage() {
         recentTransactions: [],
         categoriesBreakdown: {},
         incomeByCategory: Object.fromEntries(
-          incomeByCategory.map((item: any) => [item.category, item.amount]),
+          incomeByCategory.map((item: any) => [item.category, item.amount])
         ),
         expenseByCategory: Object.fromEntries(
-          expenseByCategory.map((item: any) => [item.category, item.amount]),
+          expenseByCategory.map((item: any) => [item.category, item.amount])
         ),
         incomeCurrentMonth: summary.income,
         expenseCurrentMonth: summary.expense,
         balanceCurrentMonth: summary.balance,
       });
     } catch (err) {
-      console.error("Erro ao carregar dashboard:", err);
+      console.error('Erro ao carregar dashboard:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleTransactionExtracted = (data: AiExtractResponse) => {
-    console.log("Transaction extracted:", data);
+    console.log('Transaction extracted:', data);
     setShowChatbot(false);
     loadDashboard();
   };
@@ -63,8 +63,8 @@ export default function DashboardPage() {
 
   const balanceColor =
     dashboard && dashboard.balanceCurrentMonth >= 0
-      ? "var(--color-success)"
-      : "var(--color-danger)";
+      ? 'var(--color-success)'
+      : 'var(--color-danger)';
 
   return (
     <div class="dashboard-page">
@@ -115,17 +115,14 @@ export default function DashboardPage() {
       <div class="dashboard-grid">
         <div class="card">
           <h2>💸 Despesas por Categoria</h2>
-          {dashboard?.expenseByCategory &&
-          Object.keys(dashboard.expenseByCategory).length > 0 ? (
+          {dashboard?.expenseByCategory && Object.keys(dashboard.expenseByCategory).length > 0 ? (
             <ul class="category-list">
-              {Object.entries(dashboard.expenseByCategory).map(
-                ([category, amount]) => (
-                  <li key={category} class="category-item">
-                    <span>{category}</span>
-                    <span class="amount expense">{formatCurrency(amount)}</span>
-                  </li>
-                ),
-              )}
+              {Object.entries(dashboard.expenseByCategory).map(([category, amount]) => (
+                <li key={category} class="category-item">
+                  <span>{category}</span>
+                  <span class="amount expense">{formatCurrency(amount)}</span>
+                </li>
+              ))}
             </ul>
           ) : (
             <p class="empty">Nenhuma despesa este mês</p>
@@ -134,17 +131,14 @@ export default function DashboardPage() {
 
         <div class="card">
           <h2>💰 Receitas por Categoria</h2>
-          {dashboard?.incomeByCategory &&
-          Object.keys(dashboard.incomeByCategory).length > 0 ? (
+          {dashboard?.incomeByCategory && Object.keys(dashboard.incomeByCategory).length > 0 ? (
             <ul class="category-list">
-              {Object.entries(dashboard.incomeByCategory).map(
-                ([category, amount]) => (
-                  <li key={category} class="category-item">
-                    <span>{category}</span>
-                    <span class="amount income">{formatCurrency(amount)}</span>
-                  </li>
-                ),
-              )}
+              {Object.entries(dashboard.incomeByCategory).map(([category, amount]) => (
+                <li key={category} class="category-item">
+                  <span>{category}</span>
+                  <span class="amount income">{formatCurrency(amount)}</span>
+                </li>
+              ))}
             </ul>
           ) : (
             <p class="empty">Nenhuma receita este mês</p>

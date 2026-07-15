@@ -13,7 +13,10 @@ export function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<UpdateProfileRequest>({ name: '', email: '' });
-  const [passwordForm, setPasswordForm] = useState<ChangePasswordRequest>({ currentPassword: '', newPassword: '' });
+  const [passwordForm, setPasswordForm] = useState<ChangePasswordRequest>({
+    currentPassword: '',
+    newPassword: '',
+  });
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -132,7 +135,9 @@ export function SettingsPage() {
                 <input
                   type="text"
                   value={formData.name}
-                  onInput={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
+                  onInput={e =>
+                    setFormData({ ...formData, name: (e.target as HTMLInputElement).value })
+                  }
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -142,7 +147,9 @@ export function SettingsPage() {
                 <input
                   type="email"
                   value={formData.email}
-                  onInput={(e) => setFormData({ ...formData, email: (e.target as HTMLInputElement).value })}
+                  onInput={e =>
+                    setFormData({ ...formData, email: (e.target as HTMLInputElement).value })
+                  }
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -167,7 +174,12 @@ export function SettingsPage() {
               <input
                 type="password"
                 value={passwordForm.currentPassword}
-                onInput={(e) => setPasswordForm({ ...passwordForm, currentPassword: (e.target as HTMLInputElement).value })}
+                onInput={e =>
+                  setPasswordForm({
+                    ...passwordForm,
+                    currentPassword: (e.target as HTMLInputElement).value,
+                  })
+                }
                 placeholder="Digite sua senha atual"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
@@ -178,7 +190,12 @@ export function SettingsPage() {
               <input
                 type="password"
                 value={passwordForm.newPassword}
-                onInput={(e) => setPasswordForm({ ...passwordForm, newPassword: (e.target as HTMLInputElement).value })}
+                onInput={e =>
+                  setPasswordForm({
+                    ...passwordForm,
+                    newPassword: (e.target as HTMLInputElement).value,
+                  })
+                }
                 placeholder="Digite sua nova senha (mín. 8 caracteres)"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required

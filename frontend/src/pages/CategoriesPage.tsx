@@ -102,7 +102,9 @@ export function CategoriesPage() {
                   type="text"
                   required
                   value={formData.name}
-                  onInput={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
+                  onInput={e =>
+                    setFormData({ ...formData, name: (e.target as HTMLInputElement).value })
+                  }
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Ex: Alimentação, Transporte"
                 />
@@ -112,7 +114,9 @@ export function CategoriesPage() {
                 <input
                   type="color"
                   value={formData.color || '#3B82F6'}
-                  onInput={(e) => setFormData({ ...formData, color: (e.target as HTMLInputElement).value })}
+                  onInput={e =>
+                    setFormData({ ...formData, color: (e.target as HTMLInputElement).value })
+                  }
                   className="mt-1 block w-full h-10 px-1 py-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

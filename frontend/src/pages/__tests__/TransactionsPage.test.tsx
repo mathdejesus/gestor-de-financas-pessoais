@@ -31,7 +31,7 @@ describe('TransactionsPage', () => {
         <AuthProvider>
           <TransactionsPage />
         </AuthProvider>
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText('Transações')).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe('TransactionsPage', () => {
         <AuthProvider>
           <TransactionsPage />
         </AuthProvider>
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText('Adicionar Transação')).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe('TransactionsPage', () => {
         <AuthProvider>
           <TransactionsPage />
         </AuthProvider>
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText(/Nenhuma transação/)).toBeInTheDocument();

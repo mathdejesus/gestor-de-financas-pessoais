@@ -9,7 +9,10 @@ export function ReportsPage() {
   const [endDate, setEndDate] = useState<string>('');
 
   // Default to last 3 months
-  const defaultStartDate = useMemo(() => format(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'), []);
+  const defaultStartDate = useMemo(
+    () => format(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+    []
+  );
   const defaultEndDate = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
 
   const handleGenerateReport = () => {
@@ -19,8 +22,7 @@ export function ReportsPage() {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-  const getTypeLabel = (type: string) =>
-    type === 'INCOME' ? 'Receita' : 'Despesa';
+  const getTypeLabel = (type: string) => (type === 'INCOME' ? 'Receita' : 'Despesa');
 
   const getTypeBadgeClass = (type: string) =>
     type === 'INCOME' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
@@ -48,7 +50,7 @@ export function ReportsPage() {
             <input
               type="date"
               value={startDate}
-              onInput={(e) => setStartDate((e.target as HTMLInputElement).value)}
+              onInput={e => setStartDate((e.target as HTMLInputElement).value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -57,7 +59,7 @@ export function ReportsPage() {
             <input
               type="date"
               value={endDate}
-              onInput={(e) => setEndDate((e.target as HTMLInputElement).value)}
+              onInput={e => setEndDate((e.target as HTMLInputElement).value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -97,7 +99,9 @@ export function ReportsPage() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
               <div className="text-sm text-gray-600 mb-2">Saldo</div>
-              <div className={`text-2xl font-bold ${report.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div
+                className={`text-2xl font-bold ${report.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              >
                 {formatCurrency(report.balance)}
               </div>
             </div>
@@ -121,7 +125,9 @@ export function ReportsPage() {
                     <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">{item.categoryName}</td>
                       <td className="py-3 px-4">
-                        <span className={`inline-flex px-2 py-1 rounded text-sm ${getTypeBadgeClass(item.type)}`}>
+                        <span
+                          className={`inline-flex px-2 py-1 rounded text-sm ${getTypeBadgeClass(item.type)}`}
+                        >
                           {getTypeLabel(item.type)}
                         </span>
                       </td>
@@ -151,9 +157,15 @@ export function ReportsPage() {
                   {report.byMonth.map((item: MonthlyReportItem, index: number) => (
                     <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">{item.month}</td>
-                      <td className="py-3 px-4 text-right text-green-600">{formatCurrency(item.income)}</td>
-                      <td className="py-3 px-4 text-right text-red-600">{formatCurrency(item.expense)}</td>
-                      <td className={`py-3 px-4 text-right font-semibold ${item.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <td className="py-3 px-4 text-right text-green-600">
+                        {formatCurrency(item.income)}
+                      </td>
+                      <td className="py-3 px-4 text-right text-red-600">
+                        {formatCurrency(item.expense)}
+                      </td>
+                      <td
+                        className={`py-3 px-4 text-right font-semibold ${item.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                      >
                         {formatCurrency(item.balance)}
                       </td>
                     </tr>

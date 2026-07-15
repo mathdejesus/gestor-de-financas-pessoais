@@ -47,7 +47,7 @@ export function LoginPage() {
                 type="email"
                 required
                 value={email}
-                onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
+                onInput={e => setEmail((e.target as HTMLInputElement).value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="voce@exemplo.com"
                 autoFocus
@@ -62,7 +62,7 @@ export function LoginPage() {
                 type="password"
                 required
                 value={password}
-                onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
+                onInput={e => setPassword((e.target as HTMLInputElement).value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="••••••••"
               />

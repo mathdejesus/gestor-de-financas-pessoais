@@ -1,15 +1,15 @@
-import { cleanup } from "@testing-library/preact";
-import { afterEach, vi } from "vitest";
-import "@testing-library/jest-dom";
+import { cleanup } from '@testing-library/preact';
+import { afterEach, vi } from 'vitest';
+import '@testing-library/jest-dom';
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
-Object.defineProperty(window, "matchMedia", {
+Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation((query) => ({
+  value: vi.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
@@ -23,7 +23,7 @@ Object.defineProperty(window, "matchMedia", {
 
 // Use a simple object to back localStorage so setItem/getItem/removeItem work
 const storageMap = new Map<string, string>();
-Object.defineProperty(window, "localStorage", {
+Object.defineProperty(window, 'localStorage', {
   writable: true,
   value: {
     getItem: vi.fn((key: string) => storageMap.get(key) ?? null),

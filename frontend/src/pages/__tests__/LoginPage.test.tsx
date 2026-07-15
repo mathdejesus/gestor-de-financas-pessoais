@@ -18,7 +18,7 @@ describe('LoginPage', () => {
         <AuthProvider>
           <LoginPage />
         </AuthProvider>
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText(/FinanceApp/)).toBeInTheDocument();
@@ -34,7 +34,7 @@ describe('LoginPage', () => {
         <AuthProvider>
           <LoginPage />
         </AuthProvider>
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     expect(await screen.findByText('Cadastrar')).toHaveAttribute('href', '/register');

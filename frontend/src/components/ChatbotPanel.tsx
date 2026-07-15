@@ -1,25 +1,21 @@
-import { h } from "preact";
-import { useState, useRef, useEffect } from "preact/hooks";
-import { api } from "../services/api";
-import type { AiExtractResponse, TransactionRequest } from "../types";
+import { h } from 'preact';
+import { useState, useRef, useEffect } from 'preact/hooks';
+import { api } from '../services/api';
+import type { AiExtractResponse, TransactionRequest } from '../types';
 
 interface ChatbotPanelProps {
   onTransactionExtracted: (data: AiExtractResponse) => void;
 }
 
-export default function ChatbotPanel({
-  onTransactionExtracted,
-}: ChatbotPanelProps) {
-  const [message, setMessage] = useState("");
+export default function ChatbotPanel({ onTransactionExtracted }: ChatbotPanelProps) {
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [extracted, setExtracted] = useState<AiExtractResponse | null>(null);
-  const [history, setHistory] = useState<
-    Array<{ user: string; bot: AiExtractResponse }>
-  >([]);
+  const [history, setHistory] = useState<Array<{ user: string; bot: AiExtractResponse }>>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [extracted, history]);
 
   const handleSubmit = async (e: Event) => {
@@ -27,24 +23,24 @@ export default function ChatbotPanel({
     if (!message.trim() || loading) return;
 
     const currentMessage = message;
-    setMessage("");
+    setMessage('');
     setLoading(true);
 
     try {
       const response = await api
-        .post("ai/extract", {
+        .post('ai/extract', {
           json: { text: currentMessage },
         })
         .json<AiExtractResponse>();
 
       setExtracted(response);
-      setHistory((prev) => [...prev, { user: currentMessage, bot: response }]);
+      setHistory(prev => [...prev, { user: currentMessage, bot: response }]);
       onTransactionExtracted(response);
     } catch (error) {
-      console.error("Erro ao extrair dados:", error);
+      console.error('Erro ao extrair dados:', error);
       const errorResponse: AiExtractResponse = {
         confidence: 0,
-        missingFields: ["Erro ao processar a mensagem"],
+        missingFields: ['Erro ao processar a mensagem'],
       };
       setExtracted(errorResponse);
     } finally {
@@ -54,11 +50,11 @@ export default function ChatbotPanel({
 
   const useExtractedData = () => {
     if (!extracted) return;
-    const now = new Date().toISOString().split("T")[0];
+    const now = new Date().toISOString().split('T')[0];
     const transactionData: TransactionRequest = {
-      description: extracted.description || "Transação via chat",
+      description: extracted.description || 'Transação via chat',
       amount: extracted.amount || 0,
-      transactionType: extracted.transactionType || "EXPENSE",
+      transactionType: extracted.transactionType || 'EXPENSE',
       transactionDate: extracted.transactionDate || now,
       categoryId: extracted.categoryId,
     };
@@ -69,30 +65,28 @@ export default function ChatbotPanel({
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return "var(--color-success)";
-    if (confidence >= 0.5) return "var(--color-warning)";
-    return "var(--color-danger)";
+    if (confidence >= 0.8) return 'var(--color-success)';
+    if (confidence >= 0.5) return 'var(--color-warning)';
+    return 'var(--color-danger)';
   };
 
   return (
     <div class="chatbot-panel card">
       <h2 class="chatbot-title">💬 Adicionar por Chat</h2>
-      <p class="chatbot-subtitle">
-        Descreva sua transação em linguagem natural
-      </p>
+      <p class="chatbot-subtitle">Descreva sua transação em linguagem natural</p>
 
       <form onSubmit={handleSubmit} class="chatbot-form">
         <div class="input-group">
           <input
             type="text"
             value={message}
-            onInput={(e) => setMessage((e.target as HTMLInputElement).value)}
+            onInput={e => setMessage((e.target as HTMLInputElement).value)}
             placeholder="Ex: Gastei R$ 50,00 com almoço ontem"
             disabled={loading}
             autoFocus
           />
           <button type="submit" disabled={loading || !message.trim()}>
-            {loading ? "⏳" : "🚀"}
+            {loading ? '⏳' : '🚀'}
           </button>
         </div>
       </form>
@@ -114,9 +108,7 @@ export default function ChatbotPanel({
                 <span>{Math.round(item.bot.confidence * 100)}%</span>
               </div>
               {item.bot.missingFields.length > 0 && (
-                <div class="warning">
-                  ⚠️ Campos faltando: {item.bot.missingFields.join(", ")}
-                </div>
+                <div class="warning">⚠️ Campos faltando: {item.bot.missingFields.join(', ')}</div>
               )}
               <button
                 class="btn btn-primary btn-sm use-data-btn"
@@ -142,9 +134,7 @@ export default function ChatbotPanel({
               <span>{Math.round(extracted.confidence * 100)}%</span>
             </div>
             {extracted.missingFields.length > 0 && (
-              <div class="warning">
-                ⚠️ Campos faltando: {extracted.missingFields.join(", ")}
-              </div>
+              <div class="warning">⚠️ Campos faltando: {extracted.missingFields.join(', ')}</div>
             )}
             <button
               class="btn btn-primary btn-sm use-data-btn"
