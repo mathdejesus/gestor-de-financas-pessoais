@@ -42,7 +42,7 @@ public class FinancialGoal {
     @Column(name = "target_value", nullable = false, precision = 10, scale = 2)
     private BigDecimal targetValue;
 
-    @Column(name = "current_value", precision = 10, scale = 2)
+    @Column(name = "current_value", precision = 10, scale = 2, nullable = false)
     @Builder.Default
     private BigDecimal currentValue = BigDecimal.ZERO;
 

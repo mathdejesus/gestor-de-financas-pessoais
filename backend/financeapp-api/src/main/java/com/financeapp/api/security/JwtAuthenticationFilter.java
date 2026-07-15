@@ -64,6 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (userOpt.isPresent()) {
                     User user = userOpt.get();
                     int tokenVersion = jwtUtil.getTokenVersion(token);
+                    // Reject tokens with stale version (revoked via password change or token rotation)
                     if (tokenVersion >= user.getTokenVersion()) {
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());

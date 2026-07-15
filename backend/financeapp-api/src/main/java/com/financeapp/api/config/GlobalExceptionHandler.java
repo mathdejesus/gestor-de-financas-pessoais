@@ -1,6 +1,7 @@
 package com.financeapp.api.config;
 
 import com.financeapp.core.exception.*;
+import com.financeapp.core.exception.ReportGenerationException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +78,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RequestNotPermitted.class)
     public ResponseEntity<Map<String, Object>> handleRateLimit(RequestNotPermitted ex) {
         return buildResponse(HttpStatus.TOO_MANY_REQUESTS, "Too many requests — please slow down");
+    }
+
+    @ExceptionHandler(ReportGenerationException.class)
+    public ResponseEntity<Map<String, Object>> handleReportGeneration(ReportGenerationException ex) {
+        log.error("Report generation failed", ex);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate report: " + ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

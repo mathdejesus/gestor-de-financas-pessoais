@@ -3,6 +3,7 @@ package com.financeapp.api.service;
 import com.financeapp.core.dto.*;
 import com.financeapp.core.entity.Transaction;
 import com.financeapp.core.enums.TransactionType;
+import com.financeapp.core.exception.ReportGenerationException;
 import com.financeapp.core.repository.TransactionRepository;
 import com.financeapp.core.service.DashboardService;
 import com.financeapp.core.service.GoalService;
@@ -250,7 +251,7 @@ public class ReportService {
 
             document.close();
         } catch (DocumentException e) {
-            throw new RuntimeException("Failed to generate PDF report", e);
+            throw new ReportGenerationException("Failed to generate PDF report", e);
         }
 
         return baos.toByteArray();

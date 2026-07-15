@@ -68,7 +68,7 @@ public class DashboardService {
                 .totalExpenses(totalExpenses)
                 .savingsRate(savingsRate)
                 .transactionCount(transactions.size())
-                .categoryCount(categoryRepository.findByUserIdOrderByUserId(userId).size())
+                .categoryCount(categoryRepository.countByUserId(userId))
                 .build();
     }
 

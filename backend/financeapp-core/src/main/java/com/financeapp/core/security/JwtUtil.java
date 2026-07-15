@@ -68,6 +68,11 @@ public class JwtUtil {
                     "Default JWT secret is not allowed in production. Set JWT_SECRET env var.");
         }
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        if (keyBytes.length < 32) {
+            log.error("CRITICAL: JWT secret too short! Must be at least 32 bytes (256 bits) for HS256. Current: {} bytes", keyBytes.length);
+            throw new IllegalStateException(
+                    "JWT secret must be at least 32 bytes (256 bits) for HS256. Generate with: openssl rand -base64 64");
+        }
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 

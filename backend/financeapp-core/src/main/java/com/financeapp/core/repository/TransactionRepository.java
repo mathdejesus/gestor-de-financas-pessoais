@@ -17,7 +17,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByUserIdAndCategoryIdOrderByTransactionDateDesc(Long userId, Long categoryId);
 
-    @Query("SELECT t FROM Transaction t WHERE t.user.id = :userId AND t.transactionDate BETWEEN :startDate AND :endDate AND (:categoryId IS NULL OR t.category.id = :categoryId) ORDER BY t.transactionDate DESC")
+    @Query("SELECT t FROM Transaction t WHERE t.user.id = :userId AND t.transactionDate BETWEEN :startDate AND :endDate AND (:categoryId IS NULL OR t.category IS NULL OR t.category.id = :categoryId) ORDER BY t.transactionDate DESC")
     List<Transaction> findByFilters(
             @Param("userId") Long userId,
             @Param("startDate") LocalDate startDate,
