@@ -21,23 +21,25 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
+// Use a simple object to back localStorage so setItem/getItem/removeItem work
+const storageMap = new Map<string, string>();
 Object.defineProperty(window, "localStorage", {
   writable: true,
   value: {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-    clear: vi.fn(),
-  },
-});
-
-Object.defineProperty(window, "sessionStorage", {
-  writable: true,
-  value: {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-    clear: vi.fn(),
+    getItem: vi.fn((key: string) => storageMap.get(key) ?? null),
+    setItem: vi.fn((key: string, value: string) => {
+      storageMap.set(key, value);
+    }),
+    removeItem: vi.fn((key: string) => {
+      storageMap.delete(key);
+    }),
+    clear: vi.fn(() => {
+      storageMap.clear();
+    }),
+    get length() {
+      return storageMap.size;
+    },
+    key: vi.fn((index: number) => Array.from(storageMap.keys())[index] ?? null),
   },
 });
 

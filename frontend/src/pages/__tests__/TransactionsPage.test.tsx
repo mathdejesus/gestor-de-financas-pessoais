@@ -1,18 +1,22 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/preact';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
 import { TransactionsPage } from '../TransactionsPage';
 
 vi.mock('../../services/api', () => ({
-  transactionApi: {
-    getAll: vi.fn().mockResolvedValue({ data: [] }),
-    create: vi.fn(),
-    update: vi.fn(),
+  api: {
+    get: vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue([]) }),
+    post: vi.fn(),
+    put: vi.fn(),
     delete: vi.fn(),
   },
-  categoryApi: {
-    getAll: vi.fn().mockResolvedValue({ data: [] }),
+  authApi: {
+    login: vi.fn(),
+    register: vi.fn(),
+    getProfile: vi.fn(),
+    updateProfile: vi.fn(),
+    changePassword: vi.fn(),
   },
 }));
 
@@ -27,10 +31,10 @@ describe('TransactionsPage', () => {
         <AuthProvider>
           <TransactionsPage />
         </AuthProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    expect(await screen.findByText('Transactions')).toBeInTheDocument();
+    expect(await screen.findByText('Transações')).toBeInTheDocument();
   });
 
   it('renders add transaction button', async () => {
@@ -39,10 +43,10 @@ describe('TransactionsPage', () => {
         <AuthProvider>
           <TransactionsPage />
         </AuthProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    expect(await screen.findByText('Add Transaction')).toBeInTheDocument();
+    expect(await screen.findByText('Adicionar Transação')).toBeInTheDocument();
   });
 
   it('shows empty state when no transactions', async () => {
@@ -51,9 +55,9 @@ describe('TransactionsPage', () => {
         <AuthProvider>
           <TransactionsPage />
         </AuthProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    expect(await screen.findByText(/No transactions yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/Nenhuma transação/)).toBeInTheDocument();
   });
 });

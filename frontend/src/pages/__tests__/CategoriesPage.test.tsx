@@ -1,15 +1,22 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/preact';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
 import { CategoriesPage } from '../CategoriesPage';
 
 vi.mock('../../services/api', () => ({
-  categoryApi: {
-    getAll: vi.fn().mockResolvedValue({ data: [] }),
-    create: vi.fn(),
-    update: vi.fn(),
+  api: {
+    get: vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue([]) }),
+    post: vi.fn(),
+    put: vi.fn(),
     delete: vi.fn(),
+  },
+  authApi: {
+    login: vi.fn(),
+    register: vi.fn(),
+    getProfile: vi.fn(),
+    updateProfile: vi.fn(),
+    changePassword: vi.fn(),
   },
 }));
 
@@ -24,10 +31,10 @@ describe('CategoriesPage', () => {
         <AuthProvider>
           <CategoriesPage />
         </AuthProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    expect(await screen.findByText('Categories')).toBeInTheDocument();
+    expect(await screen.findByText('Categorias')).toBeInTheDocument();
   });
 
   it('renders add category button', async () => {
@@ -36,10 +43,10 @@ describe('CategoriesPage', () => {
         <AuthProvider>
           <CategoriesPage />
         </AuthProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    expect(await screen.findByText('Add Category')).toBeInTheDocument();
+    expect(await screen.findByText('Adicionar Categoria')).toBeInTheDocument();
   });
 
   it('shows empty state when no categories', async () => {
@@ -48,9 +55,9 @@ describe('CategoriesPage', () => {
         <AuthProvider>
           <CategoriesPage />
         </AuthProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    expect(await screen.findByText(/No categories yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/Nenhuma categoria/)).toBeInTheDocument();
   });
 });

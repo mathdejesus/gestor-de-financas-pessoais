@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/preact';
 import { describe, it, expect, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
@@ -12,30 +12,31 @@ vi.mock('../../services/api', () => ({
 }));
 
 describe('LoginPage', () => {
-  it('renders login form', () => {
+  it('renders login form', async () => {
     render(
       <BrowserRouter>
         <AuthProvider>
           <LoginPage />
         </AuthProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    expect(screen.getByText('FinanceApp')).toBeInTheDocument();
+    expect(await screen.findByText(/FinanceApp/)).toBeInTheDocument();
+    expect(screen.getByText('Entre na sua conta')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
-    expect(screen.getByLabelText('Password')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByLabelText('Senha')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Entrar/i })).toBeInTheDocument();
   });
 
-  it('has link to register page', () => {
+  it('has link to register page', async () => {
     render(
       <BrowserRouter>
         <AuthProvider>
           <LoginPage />
         </AuthProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
-    expect(screen.getByText('Sign up')).toHaveAttribute('href', '/register');
+    expect(await screen.findByText('Cadastrar')).toHaveAttribute('href', '/register');
   });
 });

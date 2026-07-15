@@ -20,14 +20,15 @@ describe("date utils", () => {
 
   describe("formatRelativeDate", () => {
     it('returns "Hoje" for today', () => {
-      const today = new Date().toISOString().split("T")[0];
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       expect(formatRelativeDate(today)).toBe("Hoje");
     });
 
     it('returns "Ontem" for yesterday', () => {
-      const yesterday = new Date(Date.now() - 86400000)
-        .toISOString()
-        .split("T")[0];
+      const date = new Date();
+      date.setDate(date.getDate() - 1);
+      const yesterday = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       expect(formatRelativeDate(yesterday)).toBe("Ontem");
     });
 
@@ -38,7 +39,6 @@ describe("date utils", () => {
 
   describe("getMonthYear", () => {
     it("returns month/year string in Portuguese", () => {
-      // toLocaleDateString with month: 'long' returns lowercase month in pt-BR
       expect(getMonthYear("2024-01-15")).toMatch(/janeiro de 2024/i);
       expect(getMonthYear("2024-12-31")).toMatch(/dezembro de 2024/i);
     });

@@ -182,29 +182,3 @@ export interface ReportResponse {
   byCategory: CategoryReportItem[];
   byMonth: MonthlyReportItem[];
 }
-
-/** Used by Charts.tsx (recharts-based component, currently unused) */
-export interface MonthlySummary {
-  month: string;
-  income: number;
-  expenses: number;
-}
-
-export interface CategorySummary {
-  categoryName: string;
-  total: number;
-  color?: string;
-}
-
-/** Used by KPICards.tsx (currently unused) */
-export interface DashboardSummary {
-  totalBalance: number;
-  totalIncome: number;
-  totalExpenses: number;
-  savingsRate: number;
-  transactionCount: number;
-  categoryCount: number;
-}
-
-/** Used by PeriodFilter.tsx (currently unused) */
-export type PeriodType = 'month' | 'quarter' | 'year' | 'all';

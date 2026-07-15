@@ -1,11 +1,15 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { useGoals } from '../hooks/useGoals';
 import type { FinancialGoalResponse, FinancialGoalRequest } from '../types';
 
 export function GoalsPage() {
-  const { goals, loading, error, createGoal, updateGoal, deleteGoal } = useGoals();
+  const { goals, loading, error, fetchGoals, createGoal, updateGoal, deleteGoal } = useGoals();
   const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState<FinancialGoalResponse | null>(null);
+
+  useEffect(() => {
+    fetchGoals();
+  }, [fetchGoals]);
   const [formData, setFormData] = useState<FinancialGoalRequest>({
     name: '',
     targetAmount: 0,

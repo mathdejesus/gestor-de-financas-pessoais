@@ -32,7 +32,7 @@ const unauthorizedHook: AfterResponseHook = async ({ response }) => {
 };
 
 export const api = ky.create({
-  prefixUrl: API_BASE_URL,
+  prefix: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

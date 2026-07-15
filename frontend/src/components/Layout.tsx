@@ -1,8 +1,10 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../hooks/useTheme';
 
 export function Layout() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
 
   const navItems = [
@@ -40,6 +42,13 @@ export function Layout() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <button
+                onClick={toggleTheme}
+                className="px-2 py-1.5 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+              >
+                {theme === 'dark' ? '☀️' : '🌙'}
+              </button>
               <span className="text-sm text-gray-600">{user?.name}</span>
               <button
                 onClick={logout}

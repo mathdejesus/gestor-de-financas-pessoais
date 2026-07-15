@@ -155,5 +155,4 @@ export default function DashboardPage() {
   );
 }
 
-export default DashboardPage;
 export { DashboardPage };
