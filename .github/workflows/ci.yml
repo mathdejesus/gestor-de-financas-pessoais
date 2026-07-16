@@ -31,6 +31,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Setup preact/compat symlink for tests
+        working-directory: frontend
+        run: rm -rf node_modules/react && ln -sf $(pwd)/node_modules/preact/compat node_modules/react
+
       - name: Check formatting
         working-directory: frontend
         run: npm run format:check

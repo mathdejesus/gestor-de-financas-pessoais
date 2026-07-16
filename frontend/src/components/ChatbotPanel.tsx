@@ -1,4 +1,3 @@
-import { h } from 'preact';
 import { useState, useRef, useEffect } from 'preact/hooks';
 import { api } from '../services/api';
 import type { AiExtractResponse, TransactionRequest } from '../types';

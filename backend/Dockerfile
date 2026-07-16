@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /app
 COPY pom.xml ./
 COPY financeapp-api/pom.xml financeapp-api/
@@ -7,7 +7,6 @@ COPY financeapp-infra/pom.xml financeapp-infra/
 RUN mvn dependency:go-offline -B
 COPY financeapp-api/src financeapp-api/src
 COPY financeapp-core/src financeapp-core/src
-COPY financeapp-infra/src financeapp-infra/src
 RUN mvn clean package -DskipTests -B
 
 FROM eclipse-temurin:21-jre-alpine

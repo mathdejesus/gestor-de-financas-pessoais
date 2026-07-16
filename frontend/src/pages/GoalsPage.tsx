@@ -49,8 +49,8 @@ export function GoalsPage() {
       }
       setShowForm(false);
       resetForm();
-    } catch (err: any) {
-      setFormError(err?.message || 'Operation failed');
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Operation failed');
     } finally {
       setIsSubmitting(false);
     }

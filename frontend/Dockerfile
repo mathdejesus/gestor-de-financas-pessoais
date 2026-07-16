@@ -1,7 +1,7 @@
 FROM node:20.19-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm ci && rm -rf node_modules/react && ln -sf /app/node_modules/preact/compat node_modules/react
 COPY . .
 RUN npm run build
 

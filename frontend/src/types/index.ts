@@ -64,6 +64,18 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}
+
+export interface RegisterResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}
+
 export interface AiExtractResponse {
   description?: string;
   amount?: number;

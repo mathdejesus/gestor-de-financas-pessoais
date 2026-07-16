@@ -1,22 +1,16 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useAuth } from '../hooks/useAuth';
 import { useTransactions } from '../hooks/useTransactions';
 import { formatCurrency } from '../utils/currency';
-import ChatbotPanel from '../components/ChatbotPanel';
-import type { DashboardResponse, AiExtractResponse } from '../types';
+import type { DashboardResponse } from '../types';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const { fetchSummary, fetchByCategory } = useTransactions();
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showChatbot, setShowChatbot] = useState(false);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch summary
@@ -35,10 +29,10 @@ export default function DashboardPage() {
         recentTransactions: [],
         categoriesBreakdown: {},
         incomeByCategory: Object.fromEntries(
-          incomeByCategory.map((item: any) => [item.category, item.amount])
+          incomeByCategory.map((item: { category: string; amount: number }) => [item.category, item.amount])
         ),
         expenseByCategory: Object.fromEntries(
-          expenseByCategory.map((item: any) => [item.category, item.amount])
+          expenseByCategory.map((item: { category: string; amount: number }) => [item.category, item.amount])
         ),
         incomeCurrentMonth: summary.income,
         expenseCurrentMonth: summary.expense,
@@ -49,13 +43,11 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchByCategory, fetchSummary]);
 
-  const handleTransactionExtracted = (data: AiExtractResponse) => {
-    console.log('Transaction extracted:', data);
-    setShowChatbot(false);
+  useEffect(() => {
     loadDashboard();
-  };
+  }, [loadDashboard]);
 
   if (loading) {
     return <div class="loading">Carregando dashboard...</div>;
@@ -73,9 +65,6 @@ export default function DashboardPage() {
           <h1>Dashboard</h1>
           <p>Olá, {user?.name}! Veja seu resumo financeiro.</p>
         </div>
-        <button class="btn btn-primary" onClick={() => setShowChatbot(true)}>
-          ➕ Nova Transação
-        </button>
       </div>
 
       <div class="dashboard-cards">

@@ -62,12 +62,12 @@ export const authApi = {
   login: (body: { email: string; password: string }) =>
     api
       .post('auth/login', { json: body })
-      .json<any>()
+      .json<unknown>()
       .then(data => ({ data })),
   register: (body: { name: string; email: string; password: string }) =>
     api
       .post('auth/register', { json: body })
-      .json<any>()
+      .json<unknown>()
       .then(data => ({ data })),
   getProfile: () =>
     api

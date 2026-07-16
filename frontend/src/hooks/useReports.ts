@@ -13,8 +13,8 @@ export function useReports() {
     try {
       const { data } = await reportApi.generateFinancialReport({ startDate, endDate });
       setReport(data);
-    } catch (err: any) {
-      setError(err?.message || 'Falha ao gerar relatório');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao gerar relatório');
     } finally {
       setLoading(false);
     }

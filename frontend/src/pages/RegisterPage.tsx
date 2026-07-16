@@ -25,8 +25,8 @@ export function RegisterPage() {
     try {
       await register(name, email, password);
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err?.message || 'Falha ao criar conta');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao criar conta');
     } finally {
       setIsSubmitting(false);
     }

@@ -28,8 +28,8 @@ export function SettingsPage() {
       const { data } = await authApi.getProfile();
       setProfile(data);
       setFormData({ name: data.name, email: data.email });
-    } catch (err: any) {
-      setError(err?.message || 'Erro ao carregar perfil');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar perfil');
     } finally {
       setLoading(false);
     }
@@ -47,8 +47,8 @@ export function SettingsPage() {
       const { data } = await authApi.updateProfile(formData);
       setProfile(data);
       setEditing(false);
-    } catch (err: any) {
-      setError(err?.message || 'Erro ao atualizar perfil');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao atualizar perfil');
     } finally {
       setSaving(false);
     }
@@ -63,8 +63,8 @@ export function SettingsPage() {
       await authApi.changePassword(passwordForm);
       setPasswordSuccess('Senha alterada com sucesso!');
       setPasswordForm({ currentPassword: '', newPassword: '' });
-    } catch (err: any) {
-      setPasswordError(err?.message || 'Erro ao alterar senha');
+    } catch (err: unknown) {
+      setPasswordError(err instanceof Error ? err.message : 'Erro ao alterar senha');
     } finally {
       setChangingPassword(false);
     }
