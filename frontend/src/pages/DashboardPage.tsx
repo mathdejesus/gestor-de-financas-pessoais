@@ -36,10 +36,16 @@ export default function DashboardPage() {
           )
         ),
         incomeByCategory: Object.fromEntries(
-          incomeByCategory.map((item: { category: string; amount: number }) => [item.category, item.amount])
+          incomeByCategory.map((item: { category: string; amount: number }) => [
+            item.category,
+            item.amount,
+          ])
         ),
         expenseByCategory: Object.fromEntries(
-          expenseByCategory.map((item: { category: string; amount: number }) => [item.category, item.amount])
+          expenseByCategory.map((item: { category: string; amount: number }) => [
+            item.category,
+            item.amount,
+          ])
         ),
         incomeCurrentMonth: summary.income,
         expenseCurrentMonth: summary.expense,

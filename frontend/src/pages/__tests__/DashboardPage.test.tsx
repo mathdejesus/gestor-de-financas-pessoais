@@ -13,7 +13,16 @@ vi.mock('../../services/api', () => ({
       if (url.includes('transactions')) {
         return { json: vi.fn().mockResolvedValue({ content: [] }) };
       }
-      return { json: vi.fn().mockResolvedValue({ totalBalance: 0, totalIncome: 0, totalExpenses: 0, savingsRate: 0, transactionCount: 0, categoryCount: 0 }) };
+      return {
+        json: vi.fn().mockResolvedValue({
+          totalBalance: 0,
+          totalIncome: 0,
+          totalExpenses: 0,
+          savingsRate: 0,
+          transactionCount: 0,
+          categoryCount: 0,
+        }),
+      };
     }),
     post: vi.fn(),
     put: vi.fn(),

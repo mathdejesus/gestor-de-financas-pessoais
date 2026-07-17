@@ -100,10 +100,16 @@ export function useTransactions(): UseTransactionsReturn {
     const params = new URLSearchParams({ type });
     return api
       .get(`dashboard/categories?${params.toString()}`)
-      .json<Array<{ categoryId: string; categoryName: string; color: string; total: number; transactionCount: number }>>()
-      .then(items =>
-        items.map(item => ({ category: item.categoryName, amount: item.total }))
-      );
+      .json<
+        Array<{
+          categoryId: string;
+          categoryName: string;
+          color: string;
+          total: number;
+          transactionCount: number;
+        }>
+      >()
+      .then(items => items.map(item => ({ category: item.categoryName, amount: item.total })));
   }, []);
 
   return {

@@ -63,7 +63,9 @@ export function useGoals(): UseGoalsReturn {
       const response = await api.get('goals').json<Parameters<typeof toResponse>[0][]>();
       // Backend returns a plain array (List<GoalDTO>); tolerate a paginated
       // envelope just in case.
-      const list = Array.isArray(response) ? response : (response as unknown as { content: Parameters<typeof toResponse>[0][] }).content;
+      const list = Array.isArray(response)
+        ? response
+        : (response as unknown as { content: Parameters<typeof toResponse>[0][] }).content;
       setGoals(list.map(toResponse));
     } catch (err) {
       setError('Erro ao carregar metas');

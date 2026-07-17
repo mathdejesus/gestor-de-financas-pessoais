@@ -18,7 +18,7 @@ export function LoginPage() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err: unknown) {
-          setError(err instanceof Error ? err.message : 'Falha ao entrar');
+      setError(err instanceof Error ? err.message : 'Falha ao entrar');
     } finally {
       setIsSubmitting(false);
     }
