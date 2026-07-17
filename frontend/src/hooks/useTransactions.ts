@@ -10,7 +10,7 @@ interface UseTransactionsReturn {
   page: number;
   totalPages: number;
   totalElements: number;
-  fetchTransactions: (page?: number, size?: number) => Promise<void>;
+  fetchTransactions: (page?: number, size?: number) => Promise<Transaction[]>;
   createTransaction: (data: TransactionRequest) => Promise<Transaction>;
   updateTransaction: (id: string, data: TransactionRequest) => Promise<Transaction>;
   deleteTransaction: (id: string) => Promise<void>;
@@ -47,9 +47,11 @@ export function useTransactions(): UseTransactionsReturn {
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
       setPage(response.number);
+      return response.content;
     } catch (err) {
       setError('Erro ao carregar transações');
       console.error(err);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -76,15 +78,32 @@ export function useTransactions(): UseTransactionsReturn {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
+    const query = params.toString();
     return api
-      .get(`transactions/summary?${params.toString()}`)
-      .json<{ income: number; expense: number; balance: number }>();
+      .get(`dashboard/summary${query ? `?${query}` : ''}`)
+      .json<{
+        totalBalance: number;
+        totalIncome: number;
+        totalExpenses: number;
+        savingsRate: number;
+        transactionCount: number;
+        categoryCount: number;
+      }>()
+      .then(summary => ({
+        income: summary.totalIncome,
+        expense: summary.totalExpenses,
+        balance: summary.totalBalance,
+      }));
   }, []);
 
   const fetchByCategory = useCallback(async (type: 'INCOME' | 'EXPENSE') => {
+    const params = new URLSearchParams({ type });
     return api
-      .get(`transactions/by-category?type=${type}`)
-      .json<Array<{ category: string; amount: number }>>();
+      .get(`dashboard/categories?${params.toString()}`)
+      .json<Array<{ categoryId: string; categoryName: string; color: string; total: number; transactionCount: number }>>()
+      .then(items =>
+        items.map(item => ({ category: item.categoryName, amount: item.total }))
+      );
   }, []);
 
   return {

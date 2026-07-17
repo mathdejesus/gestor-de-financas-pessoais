@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import type { AiExtractResponse, TransactionRequest } from '../types';
 
 interface ChatbotPanelProps {
-  onTransactionExtracted: (data: AiExtractResponse) => void;
+  onTransactionExtracted: (data: TransactionRequest) => void;
 }
 
 export default function ChatbotPanel({ onTransactionExtracted }: ChatbotPanelProps) {
@@ -34,7 +34,7 @@ export default function ChatbotPanel({ onTransactionExtracted }: ChatbotPanelPro
 
       setExtracted(response);
       setHistory(prev => [...prev, { user: currentMessage, bot: response }]);
-      onTransactionExtracted(response);
+      onTransactionExtracted(toTransactionRequest(response));
     } catch (error) {
       console.error('Erro ao extrair dados:', error);
       const errorResponse: AiExtractResponse = {
@@ -49,18 +49,18 @@ export default function ChatbotPanel({ onTransactionExtracted }: ChatbotPanelPro
 
   const useExtractedData = () => {
     if (!extracted) return;
+    onTransactionExtracted(toTransactionRequest(extracted));
+  };
+
+  const toTransactionRequest = (data: AiExtractResponse): TransactionRequest => {
     const now = new Date().toISOString().split('T')[0];
-    const transactionData: TransactionRequest = {
-      description: extracted.description || 'Transação via chat',
-      amount: extracted.amount || 0,
-      transactionType: extracted.transactionType || 'EXPENSE',
-      transactionDate: extracted.transactionDate || now,
-      categoryId: extracted.categoryId,
+    return {
+      description: data.description ?? '',
+      amount: data.amount ?? 0,
+      transactionType: data.transactionType ?? 'EXPENSE',
+      transactionDate: data.transactionDate ?? now,
+      categoryId: data.categoryId,
     };
-    onTransactionExtracted({
-      ...extracted,
-      ...transactionData,
-    } as AiExtractResponse);
   };
 
   const getConfidenceColor = (confidence: number) => {

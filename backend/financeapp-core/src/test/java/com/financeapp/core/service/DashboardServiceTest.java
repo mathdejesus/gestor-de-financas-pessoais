@@ -62,7 +62,7 @@ class DashboardServiceTest {
         );
 
         when(transactionRepository.findByUserIdOrderByTransactionDateDesc(1L)).thenReturn(transactions);
-        when(categoryRepository.findByUserIdOrderByUserId(1L)).thenReturn(List.of(createCategory()));
+        when(categoryRepository.countByUserId(1L)).thenReturn(1L);
 
         DashboardSummary summary = dashboardService.getSummary(1L, null, null);
 
@@ -76,7 +76,6 @@ class DashboardServiceTest {
     @Test
     void getSummary_withNoTransactions_shouldReturnZeros() {
         when(transactionRepository.findByUserIdOrderByTransactionDateDesc(1L)).thenReturn(List.of());
-        when(categoryRepository.findByUserIdOrderByUserId(1L)).thenReturn(List.of());
 
         DashboardSummary summary = dashboardService.getSummary(1L, null, null);
 

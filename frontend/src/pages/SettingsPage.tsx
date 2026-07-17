@@ -21,6 +21,13 @@ export function SettingsPage() {
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [notifications, setNotifications] = useState(false);
+  const [monthlyReports, setMonthlyReports] = useState(false);
+
+  useEffect(() => {
+    setNotifications(localStorage.getItem('pref.notifications') === 'true');
+    setMonthlyReports(localStorage.getItem('pref.monthlyReports') === 'true');
+  }, []);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -231,14 +238,30 @@ export function SettingsPage() {
                 <p className="font-medium">Notificações</p>
                 <p className="text-sm text-gray-600">Receber alertas sobre metas e despesas</p>
               </div>
-              <input type="checkbox" className="w-4 h-4" defaultChecked />
+              <input
+                type="checkbox"
+                className="w-4 h-4"
+                checked={notifications}
+                onChange={e => {
+                  setNotifications(e.currentTarget.checked);
+                  localStorage.setItem('pref.notifications', String(e.currentTarget.checked));
+                }}
+              />
             </div>
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div>
                 <p className="font-medium">Relatórios Mensais</p>
                 <p className="text-sm text-gray-600">Receber resumo mensal por email</p>
               </div>
-              <input type="checkbox" className="w-4 h-4" defaultChecked />
+              <input
+                type="checkbox"
+                className="w-4 h-4"
+                checked={monthlyReports}
+                onChange={e => {
+                  setMonthlyReports(e.currentTarget.checked);
+                  localStorage.setItem('pref.monthlyReports', String(e.currentTarget.checked));
+                }}
+              />
             </div>
           </div>
         </div>

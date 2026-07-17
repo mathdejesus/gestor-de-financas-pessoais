@@ -5,9 +5,14 @@ import type {
   UpdateProfileRequest,
   ChangePasswordRequest,
   ReportResponse,
+  LoginResponse,
+  RegisterResponse,
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+// In production the SPA is served by Nginx which proxies `/api/` to the
+// backend, so a relative base works without CORS/CSP issues. Override with
+// VITE_API_URL when pointing at an external backend (e.g. local dev without proxy).
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 /**
  * Attaches the JWT access token to every outgoing request.
@@ -62,12 +67,12 @@ export const authApi = {
   login: (body: { email: string; password: string }) =>
     api
       .post('auth/login', { json: body })
-      .json<unknown>()
+      .json<LoginResponse>()
       .then(data => ({ data })),
   register: (body: { name: string; email: string; password: string }) =>
     api
       .post('auth/register', { json: body })
-      .json<unknown>()
+      .json<RegisterResponse>()
       .then(data => ({ data })),
   getProfile: () =>
     api

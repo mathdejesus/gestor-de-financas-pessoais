@@ -10,7 +10,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 RUN rm -f /etc/nginx/conf.d/default.conf
 COPY --from=builder --chown=appuser:appgroup /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-RUN chown -R appuser:appgroup /var/cache/nginx /var/run /var/log/nginx
+RUN chown -R appuser:appgroup /var/cache/nginx /var/run /var/log/nginx /run /tmp
 USER appuser
 EXPOSE 5173
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \

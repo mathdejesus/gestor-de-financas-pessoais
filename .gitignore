@@ -8,6 +8,9 @@ dist
 build
 *.local
 
+# Vite cache (root-owned on host breaks `npm run test` with EACCES)
+.vite/
+
 # Environment files
 .env
 .env.local
@@ -36,6 +39,9 @@ lerna-debug.log*
 # Testing
 coverage
 .nyc_output
+# Vitest result cache (also hit by the .vite EACCES issue)
+*.tsbuildinfo
+vitest.config.ts.timestamp-*
 
 # Maven
 target/
@@ -46,11 +52,13 @@ target/
 *.zip
 *.tar.gz
 *.rar
+.mvn/
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
-# Docker
+# Docker / security scan reports
 .docker/
+zap-reports/
 
 # Misc
 *.class

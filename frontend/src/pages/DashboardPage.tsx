@@ -2,32 +2,39 @@ import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useAuth } from '../hooks/useAuth';
 import { useTransactions } from '../hooks/useTransactions';
 import { formatCurrency } from '../utils/currency';
-import type { DashboardResponse } from '../types';
+import type { DashboardResponse, Transaction } from '../types';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { fetchSummary, fetchByCategory } = useTransactions();
+  const { fetchSummary, fetchByCategory, fetchTransactions } = useTransactions();
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch summary
-      const summary = await fetchSummary();
-
-      // Fetch by category
-      const [expenseByCategory, incomeByCategory] = await Promise.all([
+      // Fetch summary + by category + recent transactions in parallel
+      const [summary, expenseByCategory, incomeByCategory] = await Promise.all([
+        fetchSummary(),
         fetchByCategory('EXPENSE'),
         fetchByCategory('INCOME'),
       ]);
 
+      const recentResult = await fetchTransactions(0, 5);
+
+      setRecentTransactions(recentResult);
+
       setDashboard({
-        totalIncome: 0,
-        totalExpense: 0,
-        balance: 0,
-        recentTransactions: [],
-        categoriesBreakdown: {},
+        totalIncome: summary.income,
+        totalExpense: summary.expense,
+        balance: summary.balance,
+        recentTransactions: recentResult,
+        categoriesBreakdown: Object.fromEntries(
+          [...expenseByCategory, ...incomeByCategory].map(
+            (item: { category: string; amount: number }) => [item.category, item.amount]
+          )
+        ),
         incomeByCategory: Object.fromEntries(
           incomeByCategory.map((item: { category: string; amount: number }) => [item.category, item.amount])
         ),
@@ -43,7 +50,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [fetchByCategory, fetchSummary]);
+  }, [fetchByCategory, fetchSummary, fetchTransactions]);
 
   useEffect(() => {
     loadDashboard();
@@ -101,38 +108,61 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div class="dashboard-grid">
-        <div class="card">
+      <div className="dashboard-grid">
+        <div className="card">
           <h2>💸 Despesas por Categoria</h2>
           {dashboard?.expenseByCategory && Object.keys(dashboard.expenseByCategory).length > 0 ? (
-            <ul class="category-list">
+            <ul className="category-list">
               {Object.entries(dashboard.expenseByCategory).map(([category, amount]) => (
-                <li key={category} class="category-item">
+                <li key={category} className="category-item">
                   <span>{category}</span>
-                  <span class="amount expense">{formatCurrency(amount)}</span>
+                  <span className="amount expense">{formatCurrency(amount)}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p class="empty">Nenhuma despesa este mês</p>
+            <p className="empty">Nenhuma despesa este mês</p>
           )}
         </div>
 
-        <div class="card">
+        <div className="card">
           <h2>💰 Receitas por Categoria</h2>
           {dashboard?.incomeByCategory && Object.keys(dashboard.incomeByCategory).length > 0 ? (
-            <ul class="category-list">
+            <ul className="category-list">
               {Object.entries(dashboard.incomeByCategory).map(([category, amount]) => (
-                <li key={category} class="category-item">
+                <li key={category} className="category-item">
                   <span>{category}</span>
-                  <span class="amount income">{formatCurrency(amount)}</span>
+                  <span className="amount income">{formatCurrency(amount)}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p class="empty">Nenhuma receita este mês</p>
+            <p className="empty">Nenhuma receita este mês</p>
           )}
         </div>
+      </div>
+
+      <div className="card">
+        <h2>📋 Transações Recentes</h2>
+        {recentTransactions.length > 0 ? (
+          <ul className="category-list">
+            {recentTransactions.map(t => (
+              <li key={t.id} className="category-item">
+                <span>
+                  {t.description}
+                  <span className="empty" style={{ marginLeft: '0.5rem' }}>
+                    {t.transactionDate}
+                  </span>
+                </span>
+                <span className={`amount ${t.transactionType === 'INCOME' ? 'income' : 'expense'}`}>
+                  {formatCurrency(t.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty">Nenhuma transação recente</p>
+        )}
       </div>
     </div>
   );

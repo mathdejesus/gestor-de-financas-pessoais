@@ -7,10 +7,13 @@ import { DashboardPage } from '../DashboardPage';
 vi.mock('../../services/api', () => ({
   api: {
     get: vi.fn().mockImplementation((url: string) => {
-      if (url.includes('by-category')) {
+      if (url.includes('dashboard/categories')) {
         return { json: vi.fn().mockResolvedValue([]) };
       }
-      return { json: vi.fn().mockResolvedValue({ income: 0, expense: 0, balance: 0 }) };
+      if (url.includes('transactions')) {
+        return { json: vi.fn().mockResolvedValue({ content: [] }) };
+      }
+      return { json: vi.fn().mockResolvedValue({ totalBalance: 0, totalIncome: 0, totalExpenses: 0, savingsRate: 0, transactionCount: 0, categoryCount: 0 }) };
     }),
     post: vi.fn(),
     put: vi.fn(),

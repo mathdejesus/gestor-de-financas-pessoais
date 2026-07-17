@@ -98,6 +98,8 @@ public class TransactionService {
             Category category = categoryRepository.findByIdAndUserId(request.getCategoryId(), userId)
                     .orElseThrow(() -> new ResourceNotFoundException("Category", "id", request.getCategoryId()));
             transaction.setCategory(category);
+        } else {
+            transaction.setCategory(null);
         }
 
         transaction = transactionRepository.save(transaction);

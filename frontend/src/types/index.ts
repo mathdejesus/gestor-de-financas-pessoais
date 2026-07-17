@@ -31,6 +31,7 @@ export interface Transaction {
   categoryId?: string | null;
   category?: CategoryResponse;
   createdAt: string;
+  updatedAt?: string;
 }
 
 /** Alias used by pages that import CreateTransactionRequest */
@@ -124,7 +125,7 @@ export interface DashboardResponse {
   totalIncome: number;
   totalExpense: number;
   balance: number;
-  recentTransactions: TransactionResponse[];
+  recentTransactions: Transaction[];
   categoriesBreakdown: { [key: string]: number };
   incomeByCategory: { [key: string]: number };
   expenseByCategory: { [key: string]: number };

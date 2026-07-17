@@ -142,7 +142,8 @@ public class JwtUtil {
      */
     public int getTokenVersion(String token) {
         Claims claims = parseToken(token);
-        return claims.get("tokenVersion", Integer.class);
+        Integer version = claims.get("tokenVersion", Integer.class);
+        return version != null ? version : 0;
     }
 
     public long getAccessTokenExpiration() {

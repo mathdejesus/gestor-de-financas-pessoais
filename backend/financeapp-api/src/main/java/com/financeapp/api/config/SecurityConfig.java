@@ -28,7 +28,7 @@ import java.util.List;
  * Design decisions:
  * - CSRF disabled (this is a stateless JSON API using bearer tokens, not session cookies)
  * - Session creation set to STATELESS (no HttpSession, every request is authenticated independently)
- * - CORS is configurable via {@code app.cors.allowed-origins} env var (defaults to localhost:5173,3000)
+ * - CORS is configurable via {@code APP_CORS_ALLOWED_ORIGINS} env var (defaults to localhost:5173,3000)
  * - Only auth endpoints and actuator health are public; everything else requires a valid JWT
  *
  * The filter chain:
@@ -46,7 +46,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+    @Value("${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}")
     private String allowedOrigins;
 
     @Bean
