@@ -147,7 +147,7 @@ export function GoalsScreen() {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: "BRL",
     }).format(value);
 
   const getProgressColor = (pct: number) => {

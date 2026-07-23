@@ -32,9 +32,13 @@ docker compose up -d  # starts postgres:5432, backend:8080, frontend:5173
 docker compose down
 ```
 
+### Formatting
+- Frontend: `lint-staged` runs eslint + prettier on staged `.ts/.tsx`, prettier only on `.css/.json` (config in `lint-staged.config.mjs`)
+- Backend: Spotless with Google Java Format (`mvn spotless:apply` to auto-format)
+
 ### Git hooks active
 - `pre-commit`: `lint-staged` (eslint --fix + prettier --write on staged frontend files)
-- `commit-msg`: `commitlint --edit` (conventional commits, types: feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)
+- `commit-msg`: `commitlint --edit` (conventional commits, types: feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert). Header max 100 chars, no empty subject, no trailing period.
 
 ## Architecture
 

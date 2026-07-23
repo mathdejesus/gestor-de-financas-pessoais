@@ -47,9 +47,8 @@ export default function ChatbotPanel({ onTransactionExtracted }: ChatbotPanelPro
     }
   };
 
-  const useExtractedData = () => {
-    if (!extracted) return;
-    onTransactionExtracted(toTransactionRequest(extracted));
+  const applyExtractedData = (data: AiExtractResponse) => {
+    onTransactionExtracted(toTransactionRequest(data));
   };
 
   const toTransactionRequest = (data: AiExtractResponse): TransactionRequest => {
@@ -111,8 +110,8 @@ export default function ChatbotPanel({ onTransactionExtracted }: ChatbotPanelPro
               )}
               <button
                 class="btn btn-primary btn-sm use-data-btn"
-                onClick={useExtractedData}
-                disabled={!extracted || extracted.confidence < 0.5}
+                onClick={() => applyExtractedData(item.bot)}
+                disabled={item.bot.confidence < 0.5}
               >
                 ✅ Usar estes dados
               </button>
@@ -137,7 +136,7 @@ export default function ChatbotPanel({ onTransactionExtracted }: ChatbotPanelPro
             )}
             <button
               class="btn btn-primary btn-sm use-data-btn"
-              onClick={useExtractedData}
+              onClick={() => applyExtractedData(extracted)}
               disabled={extracted.confidence < 0.5}
             >
               ✅ Usar estes dados

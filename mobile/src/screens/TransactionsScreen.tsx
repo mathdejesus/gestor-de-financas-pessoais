@@ -120,7 +120,7 @@ export function TransactionsScreen() {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: "BRL",
     }).format(value);
 
   const renderItem = ({ item }: { item: Transaction }) => (

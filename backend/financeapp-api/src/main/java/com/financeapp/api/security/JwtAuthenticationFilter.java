@@ -55,15 +55,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = getTokenFromRequest(request);
 
         if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
-            String tokenType = jwtUtil.parseToken(token).get("type", String.class);
+            io.jsonwebtoken.Claims claims = jwtUtil.parseToken(token);
+            String tokenType = claims.get("type", String.class);
 
             if ("access".equals(tokenType)) {
-                Long userId = jwtUtil.getUserIdFromToken(token);
+                Long userId = Long.parseLong(claims.getSubject());
                 Optional<User> userOpt = userRepository.findById(userId);
 
                 if (userOpt.isPresent()) {
                     User user = userOpt.get();
-                    int tokenVersion = jwtUtil.getTokenVersion(token);
+                    Integer version = claims.get("tokenVersion", Integer.class);
+                    int tokenVersion = version != null ? version : 0;
                     // Reject tokens with stale version (revoked via password change or token rotation)
                     if (tokenVersion >= user.getTokenVersion()) {
                         UsernamePasswordAuthenticationToken authentication =
