@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { AxiosRequestConfig } from "axios";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
@@ -28,9 +29,28 @@ import type {
 const API_BASE_URL =
   Constants.expoConfig?.extra?.apiBaseUrl || "https://localhost:8080/api/v1";
 
+function sslPinningAdapter(config: AxiosRequestConfig): Promise<any> {
+  const url = `${config.baseURL || ""}${config.url || ""}`;
+  const headers = config.headers as Record<string, string>;
+
+  return sslFetch(url, {
+    method: (config.method?.toUpperCase() as "GET" | "POST" | "PUT" | "DELETE") || "GET",
+    headers,
+    body: config.data ? JSON.stringify(config.data) : undefined,
+    sslPinning: { certs: sslPinningConfig.certs },
+    timeoutInterval: config.timeout || 30000,
+  }).then((res) => ({
+    data: res.bodyString ? JSON.parse(res.bodyString) : undefined,
+    status: res.status,
+    headers: res.headers,
+    config,
+  }));
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
+  adapter: sslPinningConfig.enabled ? sslPinningAdapter : undefined,
 });
 
 api.interceptors.request.use(async (config) => {

@@ -2,12 +2,12 @@ import Constants from 'expo-constants';
 
 const isDev = Constants.expoConfig?.extra?.environment === 'development';
 
-// Production certificate public key (SHA-256 base64)
-// Replace with your actual server certificate fingerprint
-const PRODUCTION_PIN = 'YOUR_SERVER_CERT_SHA256_BASE64';
+// Certificate file names (without .cer extension) stored in the app bundle
+// Generate with: openssl x509 -in cert.pem -outform DER -out cert.cer
+// Place .cer files in mobile/ios/ and mobile/android/app/src/main/res/raw/
+const CERT_NAMES = ['financeapp-cert'];
 
 export const sslPinningConfig = {
   enabled: !isDev,
-  includeSubdomains: false,
-  publicKeyHashes: [PRODUCTION_PIN],
+  certs: CERT_NAMES,
 };
