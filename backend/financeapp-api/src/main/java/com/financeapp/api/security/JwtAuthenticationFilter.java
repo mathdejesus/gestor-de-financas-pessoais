@@ -5,6 +5,7 @@ import com.financeapp.core.repository.UserRepository;
 import com.financeapp.core.security.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,12 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 /**
- * Extracts and validates JWT access tokens from the Authorization header
- * on every request, then sets the SecurityContext if valid.
+ * Extracts and validates JWT access tokens from HttpOnly cookies or the Authorization
+ * header on every request, then sets the SecurityContext if valid.
+ *
+ * Token resolution order:
+ * 1. {@code access_token} HttpOnly cookie (web clients)
+ * 2. {@code Authorization: Bearer <token>} header (mobile clients)
  *
  * Extends {@link OncePerRequestFilter} instead of plain {@link jakarta.servlet.Filter}
  * to guarantee a single execution per request dispatch chain (Spring may dispatch
@@ -81,6 +86,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("access_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);

@@ -15,6 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -26,7 +28,8 @@ import java.util.List;
  * Spring Security configuration for the financeapp API.
  *
  * Design decisions:
- * - CSRF disabled (this is a stateless JSON API using bearer tokens, not session cookies)
+ * - CSRF enabled via double-submit cookie pattern (CookieCsrfTokenRepository)
+ *   Public auth endpoints are excluded from CSRF checks
  * - Session creation set to STATELESS (no HttpSession, every request is authenticated independently)
  * - CORS is configurable via {@code APP_CORS_ALLOWED_ORIGINS} env var (defaults to localhost:5173,3000)
  * - Only auth endpoints and actuator health are public; everything else requires a valid JWT
@@ -53,7 +56,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                .ignoringRequestMatchers("/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/refresh")
+            )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
