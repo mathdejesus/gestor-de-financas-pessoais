@@ -43,7 +43,7 @@
       ]
     ],
     "extra": {
-      "apiBaseUrl": "http://localhost:8080/api/v1",
+      "apiBaseUrl": "https://localhost:8080/api/v1",
       "eas": {
         "projectId": "your-eas-project-id"
       }

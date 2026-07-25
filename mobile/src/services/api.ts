@@ -21,7 +21,7 @@ import type {
 } from "../types";
 
 const API_BASE_URL =
-  Constants.expoConfig?.extra?.apiBaseUrl || "http://localhost:8080/api/v1";
+  Constants.expoConfig?.extra?.apiBaseUrl || "https://localhost:8080/api/v1";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
