@@ -77,8 +77,8 @@ public class DashboardController {
 
         for (TransactionDTO t : transactions) {
             csv.append(t.getTransactionDate()).append(",");
-            csv.append("\"").append(t.getDescription() != null ? t.getDescription().replace("\"", "\"\"") : "").append("\",");
-            csv.append("\"").append(t.getCategoryName() != null ? t.getCategoryName() : "").append("\",");
+            csv.append("\"").append(sanitizeCsvField(t.getDescription())).append("\",");
+            csv.append("\"").append(sanitizeCsvField(t.getCategoryName())).append("\",");
             csv.append(t.getTransactionType()).append(",");
             csv.append(t.getAmount()).append("\n");
         }
@@ -87,8 +87,17 @@ public class DashboardController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=transactions.csv")
-                .contentType(MediaType.TEXT_PLAIN)
+                .contentType(MediaType.parseMediaType("text/csv"))
                 .contentLength(content.length)
                 .body(content);
+    }
+
+    private String sanitizeCsvField(String value) {
+        if (value == null) return "";
+        String sanitized = value.replace("\"", "\"\"");
+        if (!sanitized.isEmpty() && "=+-@\t\n".indexOf(sanitized.charAt(0)) >= 0) {
+            sanitized = "'" + sanitized;
+        }
+        return sanitized;
     }
 }
