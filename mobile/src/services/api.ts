@@ -2,6 +2,8 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import { fetch as sslFetch } from "react-native-ssl-pinning";
+import { sslPinningConfig } from "../config/sslPinning";
 import type {
   AuthResponse,
   LoginRequest,
@@ -19,6 +21,9 @@ import type {
   CreateGoalRequest,
   UpdateGoalRequest,
 } from "../types";
+
+// SSL Pinning: In production, use sslFetch from react-native-ssl-pinning for API calls
+// See src/config/sslPinning.ts for configuration
 
 const API_BASE_URL =
   Constants.expoConfig?.extra?.apiBaseUrl || "https://localhost:8080/api/v1";
