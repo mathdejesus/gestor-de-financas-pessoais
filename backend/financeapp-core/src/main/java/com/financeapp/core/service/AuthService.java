@@ -32,7 +32,7 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateEmailException(request.getEmail());
+            throw new DuplicateEmailException();
         }
 
         User user = User.builder()
@@ -171,7 +171,7 @@ public class AuthService {
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.getEmail())) {
-                throw new DuplicateEmailException(request.getEmail());
+                throw new DuplicateEmailException();
             }
             user.setEmail(request.getEmail());
         }
