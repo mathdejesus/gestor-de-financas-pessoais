@@ -1,73 +1,68 @@
-# React + TypeScript + Vite
+# Frontend — Gestor de Finanças Pessoais
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Preact 10 + TypeScript + Vite 8 + Tailwind CSS v4
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework:** Preact 10 (lightweight React alternative, ~10KB)
+- **Language:** TypeScript (strict mode)
+- **Build:** Vite 8
+- **Styling:** Tailwind CSS v4 (utility-first)
+- **State:** Context API with useState (not useReducer/Redux/Zustand)
+- **API Client:** ky (with HttpOnly cookie auth, CSRF double-submit, silent refresh)
+- **Testing:** Vitest (unit) + Playwright (E2E)
+- **Linting:** ESLint + Prettier (via lint-staged pre-commit hooks)
 
-## React Compiler
+## Project Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+frontend/
+├── src/
+│   ├── components/        # Reusable UI (Layout, ErrorBoundary, ChatbotPanel)
+│   ├── pages/             # Route pages (Dashboard, Transactions, Categories, Goals, Reports, Settings, Login, Register)
+│   ├── hooks/             # Custom hooks (useAuth, useTransactions, useCategories, useGoals, useReports, useTheme)
+│   ├── context/           # AuthContext (useState-based, no localStorage tokens)
+│   ├── services/          # API calls via ky (authApi, reportApi, transactionsApi)
+│   ├── types/             # TypeScript interfaces
+│   ├── utils/             # Utility functions (validation, currency, date)
+│   ├── App.tsx            # Root component with routing
+│   └── main.tsx           # Entry point
+├── tests/e2e/             # Playwright E2E tests
+├── vite.config.ts         # Vite configuration
+├── vitest.config.ts       # Vitest configuration
+├── Dockerfile             # Multi-stage build (Node build + Nginx serve)
+└── nginx.conf             # Nginx config with CSP headers
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Authentication
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The frontend uses **HttpOnly cookie-based auth** (not localStorage):
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **Login/Register:** Backend sets `access_token` and `refresh_token` as HttpOnly cookies
+- **API requests:** `credentials: 'include'` sends cookies automatically
+- **CSRF:** Double-submit pattern — reads `XSRF-TOKEN` cookie, sends as `X-XSRF-TOKEN` header
+- **Silent refresh:** On 401, attempts `POST /auth/refresh` before redirecting to login
+- **Logout:** Calls `POST /auth/logout` to clear cookies, then clears local user state
+
+## Commands
+
+```bash
+npm install           # install deps
+npm run dev           # dev server (port 5173)
+npm run build         # tsc -b && vite build
+npm run preview       # vite preview (production-like)
+npm run test          # Vitest unit tests
+npm run test:watch    # Vitest in watch mode
+npm run test:coverage # coverage report
+npm run test:e2e      # Playwright E2E tests
+npm run lint          # lint via eslint
+npm run format        # prettier write
+```
+
+## Docker Testing
+
+```bash
+# Run tests in clean Docker container
+docker run --rm --cpus=2 --memory=4g -v "$PWD":/src:ro node:20-alpine sh -c \
+  'cp -r /src /test && cd /test && rm -rf node_modules package-lock.json && npm install --no-audit --no-fund && npm test'
 ```

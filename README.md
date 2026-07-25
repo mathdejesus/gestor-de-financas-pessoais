@@ -67,6 +67,8 @@ Benefício: Segurança + stateless + performance (sem session store)."
 Java 21
 ├─ Spring Boot 3.2 (Web, Security, Data JPA, Validation)
 ├─ JWT + Token Versioning (Segurança stateless)
+├─ HttpOnly Cookie Auth + CSRF Double-Submit (produção)
+├─ Per-Account Lockout (5 falhas → 15min bloqueio)
 ├─ PostgreSQL 15 + Flyway (Migrations versionadas)
 ├─ Lombok (Boilerplate reduction)
 ├─ Maven (Multi-module: api, core, infra)
@@ -80,7 +82,17 @@ Preact 10 (leve, ~10KB)
 ├─ Vite (Build rápido)
 ├─ Tailwind CSS (Utility-first)
 ├─ Context API (Estado global)
+├─ HttpOnly Cookie Auth (silent refresh automático)
 └─ Playwright (E2E tests)
+```
+
+### Mobile
+```
+Expo SDK 56 + React Native
+├─ SSL Certificate Pinning (react-native-ssl-pinning)
+├─ Expo SecureStore (tokens)
+├─ Axios API client com interceptors
+└─ Push Notifications (expo-notifications)
 ```
 
 ### DevOps & Infra
@@ -201,7 +213,7 @@ gestor-de-financas-pessoais/
 
 ---
 
-## 🔐 Segurança: Token Versioning Deep Dive
+### 🔐 Segurança: Token Versioning Deep Dive
 
 ### O Problema
 - JWT padrão: Uma vez emitido, é válido até expirar
@@ -306,6 +318,27 @@ public ResponseEntity<Void> changePassword(
 ✅ **Stateless** (sem session store)  
 ✅ **O(1) performance** (indexed lookup)  
 ✅ Funciona com **múltiplos servidores** (sem sincronização de estado)  
+
+---
+
+## 🛡️ Security Hardening (Julho 2026)
+
+Implementação completa de 6 melhorias críticas de segurança:
+
+| # | Vulnerabilidade | Solução | Status |
+|---|----------------|---------|--------|
+| C1 | JWT em localStorage | HttpOnly cookies + CSRF double-submit | ✅ |
+| C2 | Mobile HTTP default | HTTPS forçado em produção | ✅ |
+| C3 | Refresh token sem uso | Silent refresh (401 → retry automático) | ✅ |
+| C4 | Sem cert pinning | `react-native-ssl-pinning` no mobile | ✅ |
+| C5 | Email enumeration | Mensagem genérica "email already exists" | ✅ |
+| C6 | Sem brute force | Lock após 5 falhas (15min), migration V6 | ✅ |
+
+**Detalhes técnicos:**
+- `AuthController`: cookies com `secure` condicional (false em dev, true em prod)
+- `JwtAuthenticationFilter`: lê cookie primeiro, depois Authorization header (mobile compatível)
+- `SecurityConfig`: CSRF via `CookieCsrfTokenRepository`, CORS configurável via env
+- Mobile: `sslPinningAdapter` customizado para axios em produção
 
 ---
 
