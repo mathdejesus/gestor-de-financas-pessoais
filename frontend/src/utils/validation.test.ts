@@ -25,13 +25,34 @@ describe('validation utils', () => {
     it('returns invalid for short password', () => {
       expect(validatePassword('123')).toEqual({
         valid: false,
-        message: 'Senha deve ter pelo menos 6 caracteres',
+        message: 'Senha deve ter pelo menos 8 caracteres',
       });
     });
 
-    it('returns valid for valid password', () => {
-      expect(validatePassword('123456')).toEqual({ valid: true, message: '' });
-      expect(validatePassword('password123')).toEqual({
+    it('returns invalid for password missing uppercase', () => {
+      expect(validatePassword('abcdefgh1')).toEqual({
+        valid: false,
+        message: 'Senha deve conter pelo menos uma letra maiúscula',
+      });
+    });
+
+    it('returns invalid for password missing lowercase', () => {
+      expect(validatePassword('ABCDEFGH1')).toEqual({
+        valid: false,
+        message: 'Senha deve conter pelo menos uma letra minúscula',
+      });
+    });
+
+    it('returns invalid for password missing digit', () => {
+      expect(validatePassword('Abcdefgh')).toEqual({
+        valid: false,
+        message: 'Senha deve conter pelo menos um número',
+      });
+    });
+
+    it('returns valid for password meeting all criteria', () => {
+      expect(validatePassword('Abcdefg1')).toEqual({ valid: true, message: '' });
+      expect(validatePassword('Password123')).toEqual({
         valid: true,
         message: '',
       });
