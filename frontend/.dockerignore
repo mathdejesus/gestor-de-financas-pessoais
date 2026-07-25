@@ -6,3 +6,7 @@ dist
 .vscode
 .idea
 *.md
+*.log
+.DS_Store
+playwright-report/
+test-results/

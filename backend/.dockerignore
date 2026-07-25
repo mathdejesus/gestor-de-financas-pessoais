@@ -7,3 +7,4 @@ target/
 *.md
 *.log
 .DS_Store
+financeapp-infra/

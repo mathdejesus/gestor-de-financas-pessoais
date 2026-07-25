@@ -7,15 +7,6 @@
     "test": "npm run test --prefix frontend",
     "build": "npm run build --prefix frontend"
   },
-  "lint-staged": {
-    "frontend/**/*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "frontend/**/*.{json,css,md}": [
-      "prettier --write"
-    ]
-  },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.2.2",

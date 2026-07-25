@@ -60,6 +60,9 @@ target/
 .docker/
 zap-reports/
 
+# Auto-generated outputs
+graphify-out/
+
 # Misc
 *.class
 *.ser
