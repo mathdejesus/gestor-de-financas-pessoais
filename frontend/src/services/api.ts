@@ -1,5 +1,5 @@
 import ky from 'ky';
-import type { BeforeRequestHook, AfterResponseHook } from 'ky';
+import type { AfterResponseHook } from 'ky';
 import type {
   UserProfile,
   UpdateProfileRequest,
@@ -9,30 +9,34 @@ import type {
   RegisterResponse,
 } from '../types';
 
-// In production the SPA is served by Nginx which proxies `/api/` to the
-// backend, so a relative base works without CORS/CSP issues. Override with
-// VITE_API_URL when pointing at an external backend (e.g. local dev without proxy).
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
-/**
- * Attaches the JWT access token to every outgoing request.
- * Reads from the same localStorage key that AuthContext writes.
- */
-const authHook: BeforeRequestHook = ({ request }) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    request.headers.set('Authorization', `Bearer ${token}`);
-  }
-};
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
 
-/**
- * On 401 responses, clears auth state and redirects to login.
- * Handles both expired access tokens and invalid sessions.
- */
-const unauthorizedHook: AfterResponseHook = async ({ response }) => {
+const unauthorizedHook: AfterResponseHook = async ({ request, response }) => {
   if (response.status === 401) {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    if (request.url.includes('/auth/login') || request.url.includes('/auth/register') || request.url.includes('/auth/refresh')) {
+      localStorage.removeItem('user');
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      return response;
+    }
+
+    try {
+      const refreshResponse = await ky.post(`${API_BASE_URL}/auth/refresh`, {
+        credentials: 'include',
+      });
+      if (refreshResponse.ok) {
+        return ky.retry({ request, code: 'TOKEN_REFRESHED' });
+      }
+    } catch {
+      // Refresh failed — fall through to logout
+    }
+
     localStorage.removeItem('user');
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
@@ -47,9 +51,19 @@ export const api = ky.create({
     'Content-Type': 'application/json',
   },
   hooks: {
-    beforeRequest: [authHook],
+    beforeRequest: [
+      ({ request }) => {
+        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
+          const csrfToken = getCookie('XSRF-TOKEN');
+          if (csrfToken) {
+            request.headers.set('X-XSRF-TOKEN', csrfToken);
+          }
+        }
+      },
+    ],
     afterResponse: [unauthorizedHook],
   },
+  credentials: 'include',
   retry: {
     limit: 2,
     methods: ['GET', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
@@ -58,11 +72,6 @@ export const api = ky.create({
   timeout: 30000,
 });
 
-/**
- * Auth-specific API wrapper that calls auth endpoints.
- * Returns responses wrapped in { data } to match the expected format
- * in AuthContext.tsx while keeping the generic api instance pure.
- */
 export const authApi = {
   login: (body: { email: string; password: string }) =>
     api
@@ -74,6 +83,8 @@ export const authApi = {
       .post('auth/register', { json: body })
       .json<RegisterResponse>()
       .then(data => ({ data })),
+  logout: () =>
+    api.post('auth/logout').then(() => {}),
   getProfile: () =>
     api
       .get('auth/profile')
@@ -88,9 +99,6 @@ export const authApi = {
     api.post('auth/change-password', { json: body }).json<void>(),
 };
 
-/**
- * Report API wrapper for financial report generation.
- */
 export const reportApi = {
   generateFinancialReport: (params?: { startDate?: string; endDate?: string }) => {
     const searchParams = new URLSearchParams();

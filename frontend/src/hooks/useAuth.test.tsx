@@ -7,6 +7,7 @@ vi.mock('@/services/api', () => ({
   authApi: {
     login: vi.fn(),
     register: vi.fn(),
+    logout: vi.fn(),
   },
   api: {},
 }));
@@ -21,7 +22,6 @@ describe('useAuth hook', () => {
 
   it('returns user as null and isAuthenticated false initially', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
-    // Wait for the hydration effect to complete
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
@@ -29,32 +29,27 @@ describe('useAuth hook', () => {
 
   it('hydrates user from localStorage', async () => {
     const userData = { id: '1', name: 'Test User', email: 'test@example.com' };
-    localStorage.setItem('accessToken', 'mock-token');
     localStorage.setItem('user', JSON.stringify(userData));
 
     const { result } = renderHook(() => useAuth(), { wrapper });
-    // Wait for hydration effect
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.user).toEqual(userData);
     expect(result.current.isAuthenticated).toBe(true);
   });
 
-  it('clears user and token on logout', async () => {
-    localStorage.setItem('accessToken', 'mock-token');
-    localStorage.setItem('refreshToken', 'mock-refresh');
+  it('clears user on logout', async () => {
     localStorage.setItem('user', JSON.stringify({ id: '1', name: 'Test', email: 'test@test.com' }));
 
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.isAuthenticated).toBe(true);
 
-    act(() => {
-      result.current.logout();
+    await act(async () => {
+      await result.current.logout();
     });
 
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
-    expect(localStorage.getItem('accessToken')).toBeNull();
     expect(localStorage.getItem('user')).toBeNull();
   });
 
@@ -77,7 +72,6 @@ describe('useAuth hook', () => {
 
     expect(result.current.user).toEqual(mockResponse.data.user);
     expect(result.current.isAuthenticated).toBe(true);
-    expect(localStorage.getItem('accessToken')).toBe('test-token');
   });
 
   it('calls register API and updates state on success', async () => {
