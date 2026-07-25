@@ -290,6 +290,6 @@ public class ReportService {
     }
 
     private String formatCurrency(BigDecimal value) {
-        return new java.text.DecimalFormat("$#,##0.00").format(value);
+        return java.text.NumberFormat.getCurrencyInstance(java.util.Locale.of("pt", "BR")).format(value);
     }
 }
