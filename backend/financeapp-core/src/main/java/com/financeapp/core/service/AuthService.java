@@ -66,9 +66,18 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
+        if (user.isLocked()) {
+            throw new UnauthorizedException("Account temporarily locked. Try again later.");
+        }
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            user.incrementFailedAttempts();
+            userRepository.save(user);
             throw new UnauthorizedException("Invalid email or password");
         }
+
+        user.resetFailedAttempts();
+        userRepository.save(user);
 
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getTokenVersion());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail(), user.getTokenVersion());

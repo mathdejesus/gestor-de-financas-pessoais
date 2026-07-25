@@ -78,6 +78,7 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail("john@email.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed_password")).thenReturn(true);
+        when(userRepository.save(any(User.class))).thenReturn(user);
         when(jwtUtil.generateAccessToken(1L, "john@email.com", 0)).thenReturn("access_token");
         when(jwtUtil.generateRefreshToken(1L, "john@email.com", 0)).thenReturn("refresh_token");
 
@@ -98,6 +99,7 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail("john@email.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong_password", "hashed_password")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenReturn(user);
 
         assertThrows(UnauthorizedException.class, () -> authService.login(request));
     }
@@ -108,5 +110,49 @@ class AuthServiceTest {
         when(userRepository.findByEmail("nonexistent@email.com")).thenReturn(Optional.empty());
 
         assertThrows(UnauthorizedException.class, () -> authService.login(request));
+    }
+
+    @Test
+    void login_shouldLockAccountAfterFiveFailedAttempts() {
+        User user = User.builder()
+                .email("lock@test.com")
+                .passwordHash("hashed_correct")
+                .failedLoginAttempts(0)
+                .build();
+        when(userRepository.findByEmail("lock@test.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(anyString(), eq("hashed_correct"))).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        for (int i = 0; i < 5; i++) {
+            try {
+                authService.login(new LoginRequest("lock@test.com", "wrong"));
+            } catch (UnauthorizedException e) {
+                // expected — wrong password
+            }
+        }
+
+        assertTrue(user.isLocked());
+        assertThrows(UnauthorizedException.class,
+                () -> authService.login(new LoginRequest("lock@test.com", "correct")));
+    }
+
+    @Test
+    void login_shouldResetFailedAttemptsOnSuccess() {
+        User user = User.builder()
+                .id(5L)
+                .email("reset@test.com")
+                .passwordHash("hashed_correct")
+                .failedLoginAttempts(3)
+                .build();
+        when(userRepository.findByEmail("reset@test.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("correct", "hashed_correct")).thenReturn(true);
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(jwtUtil.generateAccessToken(5L, "reset@test.com", 0)).thenReturn("access_token");
+        when(jwtUtil.generateRefreshToken(5L, "reset@test.com", 0)).thenReturn("refresh_token");
+
+        authService.login(new LoginRequest("reset@test.com", "correct"));
+
+        assertEquals(0, user.getFailedLoginAttempts());
+        assertNull(user.getLockedUntil());
     }
 }
