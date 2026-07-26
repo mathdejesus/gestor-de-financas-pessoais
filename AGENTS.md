@@ -72,7 +72,7 @@ backend/
       application-prod.yml  # strict errors, actuator health-only, WARN logging
       db/migration/         # Flyway SQL (V1-V5)
   financeapp-core/     # entities, repositories, services, DTOs, validation, JWT utils
-  financeapp-infra/    # empty scaffold (no src/)
+  financeapp-infra/    # Infrastructure adapters (Redis, Kafka, S3) — scaffold, needs implementation
 
 mobile/                # Expo SDK 56 + React Native (axios, not ky)
   SSL Pinning: react-native-ssl-pinning in mobile/src/config/sslPinning.ts
@@ -103,7 +103,9 @@ mobile/                # Expo SDK 56 + React Native (axios, not ky)
 - **CSP in Nginx**: `Content-Security-Policy` header configurado no `nginx.conf` — restringe script-src, style-src, font-src, connect-src.
 - **Swagger/SpringDoc**: Available at `/swagger-ui.html` in `dev` profile only (inline in application.yml).
 - **PWA enabled**: `vite-plugin-pwa` with Workbox — service worker auto-registers, API calls cached NetworkFirst (1h), Google Fonts CacheFirst (1y).
-- **Nginx in Docker**: Production Dockerfile serves via Nginx which proxies `/api/` to `backend:8080` internally.
+- **Observability**: Metrics endpoint `/actuator/prometheus` (Prometheus format), Micrometer dependency in backend pom.xml, Docker Compose includes Grafana +Prometheus stack for production monitoring
+- **Nginx hardening**: Security headers (HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) configured in `nginx.conf` - versioned in repo
+- **Nginx rate limiting**: 30 req/s burst=20 in production Nginx config, also Resilience4j rate limiting on API endpoints (5 req/s auth, 100 req/s API)
 - **OpenPDF**: Backend includes openpdf for PDF report generation.
 - **Solarized theme**: Light/dark via CSS custom properties + `data-theme` attribute.
 - **CI/CD pipeline**: `.github/workflows/ci.yml` runs frontend (Node 22) + backend (Java 21, PostgreSQL 15) tests, then builds Docker images. Triggers on push/PR to `main` and `develop`.

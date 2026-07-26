@@ -491,7 +491,7 @@ Push to main/develop
 ### Código Frontend
 - **Componentes**: Preact functional components com hooks
 - **State Management**: Context API (AuthContext, ThemeContext)
-- **API Client**: Axios com interceptors de autenticação
+- **API Client**: ky (frontend), axios (mobile)
 - **TypeScript**: Strict mode ativado
 - **Styling**: Tailwind CSS + componentes customizados
 
@@ -549,7 +549,7 @@ Encontrou um bug? Tem ideia de feature?
 
 ## 📜 Licença
 
-Este projeto está licenciado sob a **MIT License** - veja [LICENSE](LICENSE) para detalhes.
+Este projeto está licenciado sob a **Apache License 2.0** - veja [LICENSE](LICENSE) para detalhes.
 
 ---
 
