@@ -110,6 +110,9 @@ public class JwtUtil {
     }
 
     public Claims parseToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new JwtException("JWT token is null or blank");
+        }
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
@@ -128,6 +131,9 @@ public class JwtUtil {
     }
 
     public boolean validateToken(String token) {
+        if (token == null || token.isBlank()) {
+            return false;
+        }
         try {
             parseToken(token);
             return true;

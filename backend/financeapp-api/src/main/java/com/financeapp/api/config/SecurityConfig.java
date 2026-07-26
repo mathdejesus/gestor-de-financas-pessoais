@@ -58,7 +58,10 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()) 
+                .requireCsrfProtectionMatcher(request -> {
+                    return !request.getRequestURI().startsWith("/api/v1/auth/") && !request.getRequestURI().startsWith("/actuator/health");
+                })
                 .ignoringRequestMatchers("/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/refresh")
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

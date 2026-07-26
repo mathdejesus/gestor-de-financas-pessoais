@@ -67,7 +67,7 @@ public class AuthService {
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
         if (user.isLocked()) {
-            throw new UnauthorizedException("Account temporarily locked. Try again later.");
+            throw new UnauthorizedException("Invalid email or password");
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
