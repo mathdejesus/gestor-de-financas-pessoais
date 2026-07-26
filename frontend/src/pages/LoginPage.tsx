@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { PasswordVisibilityToggle } from '../components/PasswordVisibilityToggle';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -54,17 +55,14 @@ export function LoginPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Senha
-              </label>
-              <input
+              <PasswordVisibilityToggle
                 id="password"
-                type="password"
-                required
+                label="Senha"
                 value={password}
                 onInput={e => setPassword((e.target as HTMLInputElement).value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="••••••••"
+                required
+                autoFocus={!email}
               />
             </div>
           </div>

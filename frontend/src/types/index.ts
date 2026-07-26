@@ -61,19 +61,14 @@ export interface DashboardData {
 }
 
 export interface AuthResponse {
-  token: string;
   user: User;
 }
 
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
   user: User;
 }
 
 export interface RegisterResponse {
-  accessToken: string;
-  refreshToken: string;
   user: User;
 }
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/api';
+import { PasswordVisibilityToggle } from '../components/PasswordVisibilityToggle';
 import type { UserProfile, UpdateProfileRequest, ChangePasswordRequest } from '../types';
 
 export function SettingsPage() {
@@ -177,9 +178,9 @@ export function SettingsPage() {
           <h2 className="text-lg font-semibold mb-6">Segurança</h2>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Senha Atual</label>
-              <input
-                type="password"
+              <PasswordVisibilityToggle
+                id="currentPassword"
+                label="Senha Atual"
                 value={passwordForm.currentPassword}
                 onInput={e =>
                   setPasswordForm({
@@ -188,14 +189,13 @@ export function SettingsPage() {
                   })
                 }
                 placeholder="Digite sua senha atual"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Nova Senha</label>
-              <input
-                type="password"
+              <PasswordVisibilityToggle
+                id="newPassword"
+                label="Nova Senha"
                 value={passwordForm.newPassword}
                 onInput={e =>
                   setPasswordForm({
@@ -204,7 +204,6 @@ export function SettingsPage() {
                   })
                 }
                 placeholder="Digite sua nova senha (mín. 8 caracteres)"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
                 minLength={8}
               />

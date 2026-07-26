@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { PasswordVisibilityToggle } from '../components/PasswordVisibilityToggle';
 
 export function RegisterPage() {
   const [name, setName] = useState('');
@@ -74,30 +75,24 @@ export function RegisterPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Senha
-              </label>
-              <input
+              <PasswordVisibilityToggle
                 id="password"
-                type="password"
-                required
-                minLength={8}
+                label="Senha"
                 value={password}
                 onInput={e => setPassword((e.target as HTMLInputElement).value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="••••••••"
+                required
+                minLength={8}
               />
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirmar senha
-              </label>
-              <input
+              <PasswordVisibilityToggle
                 id="confirmPassword"
-                type="password"
-                required
+                label="Confirmar senha"
                 value={confirmPassword}
                 onInput={e => setConfirmPassword((e.target as HTMLInputElement).value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="••••••••"
+                required
               />
             </div>
           </div>
