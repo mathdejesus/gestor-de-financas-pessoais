@@ -12,15 +12,22 @@ jobs:
   # ============================================
   test-frontend:
     name: Test Frontend
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git for safe operations
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global url."https://github.com/".insteadOf git@github.com:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24.x'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -59,7 +66,7 @@ jobs:
   # ============================================
   test-backend:
     name: Test Backend
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:15-alpine
@@ -78,6 +85,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -107,12 +116,14 @@ jobs:
   # ============================================
   build-docker:
     name: Build Docker Images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [test-frontend, test-backend]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build backend Docker image
         run: docker build -t financeapp-backend:ci ./backend
@@ -125,7 +136,7 @@ jobs:
   # ============================================
   verify:
     name: All Checks Passed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [test-frontend, test-backend, build-docker]
 
     steps:
