@@ -17,7 +17,7 @@ mvn spring-boot:run -pl financeapp-api -Pdev -Dspring-boot.run.profiles=dev
 
 ### Root
 ```bash
-# No npm scripts anymore (frontend was removed). Husky + commitlint only.
+# No npm/node tooling anymore (frontend was removed; husky + commitlint removed in 2026-08-09).
 ```
 
 ## Architecture & Key Paths
@@ -66,6 +66,5 @@ mvn spring-boot:run -pl financeapp-api -Pdev -Dspring-boot.run.profiles=dev
 
 ## Git & Conventions
 
-- Conventional commits enforced by husky `commitlint` (`type-enum`, `subject-empty`, `header-max-length 100`)
-- Pre-commit hook: `git diff --cached --check` only (no frontend to lint anymore)
+- Conventional commits (`feat`, `fix`, `docs`, `refactor`, `chore`, etc., header ≤ 100 chars) — convention only, no hook enforcement (husky/commitlint removed)
 - Flyway migrations: semantic versions `V1.0__`, `V1.1__` style

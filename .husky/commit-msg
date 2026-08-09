@@ -1,8 +1,0 @@
-#!/bin/sh
-export PATH="$HOME/.nvm/versions/node/v24.18.1/bin:$PATH"
-if command -v node >/dev/null 2>&1; then
-  exec node "$HOME/.nvm/versions/node/v24.18.1/lib/node_modules/npm/bin/npx-cli.js" --no -- commitlint --edit "$1"
-else
-  echo "Node.js not found in PATH" >&2
-  exit 127
-fi
