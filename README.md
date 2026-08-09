@@ -181,30 +181,7 @@ docker compose up -d
 ### Por Quê Maven Multi-Module (não Gradle)?
 - Clean separation (API vs Core)
 - Testes independentes
-- Padrão corporativo (Itaú, Bradesco)
-
----
-
-## Defesa em Entrevista
-
-**Pergunta:** "Como você gerencia revogação de tokens em JWT?"
-
-**Resposta (fundamentada no código):**
-```
-"Implementei token versioning. Cada JWT contém um claim 'tokenVersion'.
-No banco, a tabela User tem uma coluna 'tokenVersion' indexada.
-
-No login, geramos token com a versão atual do usuário.
-A cada logout/mudança de senha, incrementamos essa versão no banco.
-
-Durante a autenticação (JwtAuthenticationFilter):
-1. Extraio tokenVersion do JWT
-2. Faço lookup O(1) no banco (indexed query)
-3. Comparo versões — se não baterem, token está revogado
-
-Benefícios: revogação instantânea, stateless, escalável, sem session store.
-"
-```
+- Padrão corporativo 
 
 ---
 
