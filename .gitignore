@@ -62,9 +62,17 @@ zap-reports/
 
 # Auto-generated outputs
 graphify-out/
+.graphify/
 
 # Misc
 *.class
 *.ser
 hs_err_pid*
 replay_pid*git.txt
+
+# Agent tooling / personal notes (user-specific, not project code)
+.agents/
+.claude/
+.obsidian/
+.superpowers/
+erros_encontrados.md

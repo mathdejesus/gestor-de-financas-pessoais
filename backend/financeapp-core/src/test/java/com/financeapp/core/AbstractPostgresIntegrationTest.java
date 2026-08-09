@@ -1,7 +1,6 @@
 package com.financeapp.core;
 
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -39,7 +38,9 @@ public abstract class AbstractPostgresIntegrationTest {
     private static final PostgreSQLContainer<?> postgres;
 
     static {
-        postgres = new PostgreSQLContainer<>("postgres:15-alpine")
+        @SuppressWarnings("resource") // lifecycle is manual: start() below, stop() via shutdown hook
+        PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:15-alpine");
+        postgres = container
                 .withDatabaseName("test_financeapp")
                 .withUsername("test")
                 .withPassword("test");
