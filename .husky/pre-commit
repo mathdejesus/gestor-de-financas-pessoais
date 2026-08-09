@@ -1,1 +1,4 @@
-npx lint-staged
+#!/bin/sh
+# Pre-commit: check for whitespace errors (no more lint-staged — the SPA was
+# replaced by server-rendered Thymeleaf pages, there is no frontend to lint).
+git diff --cached --check

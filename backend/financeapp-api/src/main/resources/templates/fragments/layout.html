@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#002b36">
+    <title th:text="${title} + ' · FinanceApp'">FinanceApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="manifest" th:href="@{/manifest.webmanifest}">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <script th:inline="javascript">
+        // PWA: registra o service worker apenas para cache offline (nenhuma lógica de negócio no cliente)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
+</head>
+
+<nav class="navbar" th:fragment="navbar(activeNav)">
+    <div class="nav-inner">
+        <a class="brand" th:href="@{/dashboard}">FinanceApp</a>
+        <div class="nav-links">
+            <a th:href="@{/dashboard}" th:classappend="${activeNav == 'dashboard'} ? 'active'">Dashboard</a>
+            <a th:href="@{/transactions}" th:classappend="${activeNav == 'transactions'} ? 'active'">Transações</a>
+            <a th:href="@{/categories}" th:classappend="${activeNav == 'categories'} ? 'active'">Categorias</a>
+            <a th:href="@{/goals}" th:classappend="${activeNav == 'goals'} ? 'active'">Metas</a>
+            <a th:href="@{/reports}" th:classappend="${activeNav == 'reports'} ? 'active'">Relatórios</a>
+            <a th:href="@{/settings}" th:classappend="${activeNav == 'settings'} ? 'active'">Configurações</a>
+        </div>
+        <div class="nav-actions">
+            <a class="theme-toggle"
+               th:href="@{/theme(mode=${theme == 'light' ? 'dark' : 'light'})}"
+               th:title="${theme == 'light' ? 'Modo escuro' : 'Modo claro'}"
+               th:text="${theme == 'light' ? '🌙' : '☀️'}">☀️</a>
+            <span class="nav-user" th:text="${userName}">Usuário</span>
+            <form th:action="@{/logout}" method="post" class="inline-form">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-ghost btn-sm">Sair</button>
+            </form>
+        </div>
+    </div>
+</nav>
+</html>

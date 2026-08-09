@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme}">
+<head th:replace="~{fragments/layout :: head('Criar conta')}"></head>
+<body>
+<main class="auth-container">
+    <div class="card auth-card">
+        <h1 class="auth-brand">FinanceApp</h1>
+        <p class="auth-subtitle">Crie sua conta gratuita</p>
+
+        <div th:if="${registerError}" class="alert alert-error" th:text="${registerError}">Erro</div>
+        <div th:if="${#fields.hasErrors('registerRequest')}" class="alert alert-error">
+            <span th:each="err : ${#fields.errors('registerRequest.*')}" th:text="${err}">erro</span>
+        </div>
+
+        <form th:action="@{/register}" method="post" class="form-stack">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+
+            <div class="form-group">
+                <label for="name">Nome</label>
+                <input type="text" id="name" name="name" th:value="${registerRequest.name}" required autofocus minlength="2">
+            </div>
+
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" th:value="${registerRequest.email}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" required minlength="8"
+                       placeholder="Mínimo 8 caracteres">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+        </form>
+
+        <p class="auth-footer">
+            Já tem uma conta?
+            <a th:href="@{/login}">Entrar</a>
+        </p>
+    </div>
+</main>
+</body>
+</html>

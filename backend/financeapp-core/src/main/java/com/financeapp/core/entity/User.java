@@ -39,6 +39,7 @@ public class User {
     private Integer tokenVersion = 0;
 
     @Column(name = "failed_login_attempts", nullable = false)
+    @Builder.Default
     private int failedLoginAttempts = 0;
 
     @Column(name = "locked_until")

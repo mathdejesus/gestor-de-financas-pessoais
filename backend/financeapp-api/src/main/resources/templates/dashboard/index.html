@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme}">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar('dashboard')}"></nav>
+
+<main class="container">
+    <header class="page-header">
+        <h1>Dashboard</h1>
+        <p>Olá, <span th:text="${userName}">Usuário</span>! Veja seu resumo financeiro.</p>
+    </header>
+
+    <section class="stat-grid">
+        <div class="card stat-card">
+            <div class="stat-icon income">💰</div>
+            <div class="stat-info">
+                <span class="stat-label">Receitas</span>
+                <span class="stat-value income"
+                      th:text="${#numbers.formatDecimal(summary.totalIncome, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+            </div>
+        </div>
+
+        <div class="card stat-card">
+            <div class="stat-icon expense">💸</div>
+            <div class="stat-info">
+                <span class="stat-label">Despesas</span>
+                <span class="stat-value expense"
+                      th:text="${#numbers.formatDecimal(summary.totalExpenses, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+            </div>
+        </div>
+
+        <div class="card stat-card">
+            <div class="stat-icon" th:classappend="${summary.totalBalance.signum() >= 0} ? 'income' : 'expense'">📊</div>
+            <div class="stat-info">
+                <span class="stat-label">Saldo</span>
+                <span class="stat-value"
+                      th:classappend="${summary.totalBalance.signum() >= 0} ? 'income' : 'expense'"
+                      th:text="${#numbers.formatDecimal(summary.totalBalance, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+            </div>
+        </div>
+
+        <div class="card stat-card">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-info">
+                <span class="stat-label">Taxa de Poupança</span>
+                <span class="stat-value" th:text="${summary.savingsRate} + '%'">0%</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="dashboard-grid">
+        <div class="card">
+            <h2>💸 Movimentação por Categoria</h2>
+            <ul class="category-list" th:if="${!#lists.isEmpty(categoryBars)}">
+                <li class="category-item" th:each="cat : ${categoryBars}">
+                    <span th:text="${cat.name}">Categoria</span>
+                    <div class="bar-track">
+                        <div class="bar-fill expense" th:style="'width:' + ${cat.percent} + '%'"></div>
+                    </div>
+                    <span class="amount expense"
+                          th:text="${#numbers.formatDecimal(cat.total, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+                </li>
+            </ul>
+            <p class="empty" th:if="${#lists.isEmpty(categoryBars)}">Nenhuma categoria com movimentação</p>
+        </div>
+
+        <div class="card">
+            <h2>📋 Transações Recentes</h2>
+            <ul class="category-list" th:if="${!#lists.isEmpty(recentTransactions)}">
+                <li class="category-item" th:each="t : ${recentTransactions}">
+                    <span>
+                        <span th:text="${t.description}">Descrição</span>
+                        <span class="muted"
+                              th:text="${#temporals.format(t.transactionDate, 'dd/MM/yyyy')}">01/01/2026</span>
+                    </span>
+                    <span class="amount"
+                          th:classappend="${t.transactionType.name() == 'INCOME'} ? 'income' : 'expense'"
+                          th:text="${#numbers.formatDecimal(t.amount, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+                </li>
+            </ul>
+            <p class="empty" th:if="${#lists.isEmpty(recentTransactions)}">Nenhuma transação recente</p>
+        </div>
+    </section>
+</main>
+</body>
+</html>

@@ -3,11 +3,10 @@ WORKDIR /app
 COPY pom.xml ./
 COPY financeapp-api/pom.xml financeapp-api/
 COPY financeapp-core/pom.xml financeapp-core/
-COPY financeapp-infra/pom.xml financeapp-infra/
 RUN mvn dependency:go-offline -B
 COPY financeapp-api/src financeapp-api/src
 COPY financeapp-core/src financeapp-core/src
-RUN mvn clean package -DskipTests -B
+RUN mvn clean package -Dmaven.test.skip=true -B
 
 FROM eclipse-temurin:21-jre-alpine
 RUN apk add --no-cache curl

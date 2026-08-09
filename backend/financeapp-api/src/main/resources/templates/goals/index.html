@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme}">
+<head th:replace="~{fragments/layout :: head('Metas')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar('goals')}"></nav>
+
+<main class="container">
+    <header class="page-header">
+        <h1>Metas Financeiras</h1>
+    </header>
+
+    <div class="card">
+        <h2>Nova meta</h2>
+        <div th:if="${createError}" class="alert alert-error" th:text="${createError}">Erro</div>
+        <form th:action="@{/goals}" method="post" class="filter-row">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+            <div class="form-group">
+                <label for="goalDesc">Descrição</label>
+                <input type="text" id="goalDesc" name="description" required placeholder="Ex: Viagem para a Europa">
+            </div>
+            <div class="form-group">
+                <label for="goalTarget">Valor alvo (R$)</label>
+                <input type="number" id="goalTarget" name="targetValue" step="0.01" min="0.01" required placeholder="10.000,00">
+            </div>
+            <div class="form-group">
+                <label for="goalDeadline">Prazo</label>
+                <input type="date" id="goalDeadline" name="deadline">
+            </div>
+            <div class="form-group filter-actions">
+                <button type="submit" class="btn btn-primary">Criar</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="goal-grid" th:if="${!#lists.isEmpty(goals)}">
+        <div class="card goal-card" th:each="g : ${goals}">
+            <div class="goal-head">
+                <h3 th:text="${g.description}">Meta</h3>
+                <span class="badge"
+                      th:classappend="${g.status.name() == 'COMPLETED'} ? 'badge-income' : (${g.status.name() == 'ABANDONED'} ? 'badge-expense' : 'badge-pending')"
+                      th:text="${g.status.name()}">ATIVO</span>
+            </div>
+
+            <div class="goal-values">
+                <span th:text="${#numbers.formatDecimal(g.currentValue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+                <span class="muted">de</span>
+                <span th:text="${#numbers.formatDecimal(g.targetValue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+            </div>
+
+            <div class="bar-track goal-bar">
+                <div class="bar-fill"
+                     th:classappend="${g.progressPercentage.intValue() >= 100} ? 'income' : ''"
+                     th:style="'width:' + ${g.progressPercentage} + '%'"></div>
+            </div>
+            <div class="goal-meta">
+                <span th:text="${g.progressPercentage} + '% concluído'">0%</span>
+                <span th:if="${g.daysRemaining != null}" th:text="${g.daysRemaining} + ' dias restantes'">0 dias</span>
+            </div>
+
+            <form th:action="@{/goals/{id}/update(id=${g.id})}" method="post" class="goal-progress-form">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <input type="number" name="currentValue" step="0.01" min="0"
+                       th:value="${g.currentValue}" placeholder="Valor atual" class="edit-input">
+                <select name="status" class="edit-input">
+                    <option value="ACTIVE" th:selected="${g.status.name() == 'ACTIVE'}">Ativo</option>
+                    <option value="COMPLETED" th:selected="${g.status.name() == 'COMPLETED'}">Concluída</option>
+                    <option value="ABANDONED" th:selected="${g.status.name() == 'ABANDONED'}">Abandonada</option>
+                </select>
+                <button type="submit" class="btn btn-secondary btn-sm">Atualizar</button>
+            </form>
+
+            <form th:action="@{/goals/{id}/delete(id=${g.id})}" method="post" class="inline-form">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-danger btn-sm"
+                        onclick="return confirm('Excluir esta meta?');">Excluir</button>
+            </form>
+        </div>
+    </div>
+
+    <p class="empty" th:if="${#lists.isEmpty(goals)}">Nenhuma meta cadastrada</p>
+</main>
+</body>
+</html>

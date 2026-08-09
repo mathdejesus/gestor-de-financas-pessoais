@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme}">
+<head th:replace="~{fragments/layout :: head('Transações')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar('transactions')}"></nav>
+
+<main class="container">
+    <header class="page-header">
+        <h1>Transações</h1>
+        <a th:href="@{/transactions/new}" class="btn btn-primary">+ Nova transação</a>
+    </header>
+
+    <div class="card">
+        <form th:action="@{/transactions}" method="get" class="filter-row">
+            <div class="form-group">
+                <label for="startDate">De</label>
+                <input type="date" id="startDate" name="startDate" th:value="${startDate}">
+            </div>
+            <div class="form-group">
+                <label for="endDate">Até</label>
+                <input type="date" id="endDate" name="endDate" th:value="${endDate}">
+            </div>
+            <div class="form-group">
+                <label for="categoryId">Categoria</label>
+                <select id="categoryId" name="categoryId">
+                    <option value="">Todas</option>
+                    <option th:each="cat : ${categories}"
+                            th:value="${cat.id}"
+                            th:text="${cat.name}"
+                            th:selected="${selectedCategoryId != null && selectedCategoryId == cat.id}"></option>
+                </select>
+            </div>
+            <div class="form-group filter-actions">
+                <button type="submit" class="btn btn-secondary">Filtrar</button>
+                <a th:href="@{/transactions}" class="btn btn-ghost">Limpar</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive" th:if="${!#lists.isEmpty(transactions)}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Tipo</th>
+                    <th class="text-right">Valor</th>
+                    <th class="text-right">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${transactions}">
+                    <td th:text="${#temporals.format(t.transactionDate, 'dd/MM/yyyy')}">01/01/2026</td>
+                    <td th:text="${t.description}">Descrição</td>
+                    <td>
+                        <span class="badge" th:text="${t.categoryName ?: 'Sem categoria'}">Categoria</span>
+                    </td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${t.transactionType.name() == 'INCOME'} ? 'badge-income' : 'badge-expense'"
+                              th:text="${t.transactionType.name() == 'INCOME'} ? 'Receita' : 'Despesa'">Tipo</span>
+                    </td>
+                    <td class="text-right"
+                        th:classappend="${t.transactionType.name() == 'INCOME'} ? 'text-income' : 'text-expense'"
+                        th:text="${#numbers.formatDecimal(t.amount, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                    <td class="text-right actions">
+                        <a th:href="@{/transactions/{id}/edit(id=${t.id})}" class="btn btn-ghost btn-sm">Editar</a>
+                        <form th:action="@{/transactions/{id}/delete(id=${t.id})}" method="post" class="inline-form">
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Excluir esta transação?');">Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="empty" th:if="${#lists.isEmpty(transactions)}">Nenhuma transação encontrada</p>
+    </div>
+</main>
+</body>
+</html>

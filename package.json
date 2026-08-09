@@ -2,16 +2,14 @@
   "name": "financial-management-platform",
   "private": true,
   "scripts": {
-    "prepare": "husky",
-    "lint": "npm run lint --prefix frontend",
-    "test": "npm run test --prefix frontend",
-    "build": "npm run build --prefix frontend"
+    "prepare": "husky"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.2.2",
-    "husky": "^9.1.7",
-    "lint-staged": "^15.5.2",
-    "prettier": "^3.8.3"
+    "husky": "^9.1.7"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   }
 }

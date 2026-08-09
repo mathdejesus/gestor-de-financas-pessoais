@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme}">
+<head th:replace="~{fragments/layout :: head('Relatórios')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar('reports')}"></nav>
+
+<main class="container">
+    <header class="page-header">
+        <h1>Relatórios Financeiros</h1>
+    </header>
+
+    <div class="card">
+        <form th:action="@{/reports}" method="get" class="filter-row">
+            <div class="form-group">
+                <label for="startDate">Data inicial</label>
+                <input type="date" id="startDate" name="startDate" th:value="${startDate}">
+            </div>
+            <div class="form-group">
+                <label for="endDate">Data final</label>
+                <input type="date" id="endDate" name="endDate" th:value="${endDate}">
+            </div>
+            <div class="form-group filter-actions">
+                <button type="submit" class="btn btn-secondary">Gerar relatório</button>
+                <a th:href="@{/reports/export/csv(startDate=${startDate != '' ? startDate : null}, endDate=${endDate != '' ? endDate : null})}"
+                   class="btn btn-ghost">Exportar CSV</a>
+                <a th:href="@{/reports/pdf(startDate=${startDate != '' ? startDate : null}, endDate=${endDate != '' ? endDate : null})}"
+                   class="btn btn-ghost">Exportar PDF</a>
+            </div>
+        </form>
+    </div>
+
+    <section class="stat-grid">
+        <div class="card stat-card">
+            <div class="stat-info">
+                <span class="stat-label">Receitas</span>
+                <span class="stat-value income"
+                      th:text="${#numbers.formatDecimal(report.totalIncome, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+            </div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-info">
+                <span class="stat-label">Despesas</span>
+                <span class="stat-value expense"
+                      th:text="${#numbers.formatDecimal(report.totalExpense, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+            </div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-info">
+                <span class="stat-label">Saldo</span>
+                <span class="stat-value"
+                      th:classappend="${report.balance.signum() >= 0} ? 'income' : 'expense'"
+                      th:text="${#numbers.formatDecimal(report.balance, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="card">
+        <h2>Resumo por Categoria</h2>
+        <div class="table-responsive" th:if="${!#lists.isEmpty(report.byCategory)}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Categoria</th>
+                    <th>Tipo</th>
+                    <th class="text-right">Valor</th>
+                    <th class="text-right">Qtd</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${report.byCategory}">
+                    <td th:text="${item.categoryName}">Categoria</td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${item.type == 'INCOME'} ? 'badge-income' : 'badge-expense'"
+                              th:text="${item.type == 'INCOME'} ? 'Receita' : 'Despesa'">Tipo</span>
+                    </td>
+                    <td class="text-right" th:text="${#numbers.formatDecimal(item.amount, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                    <td class="text-right" th:text="${item.transactionCount}">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="empty" th:if="${#lists.isEmpty(report.byCategory)}">Sem dados no período</p>
+    </div>
+
+    <div class="card">
+        <h2>Evolução Mensal</h2>
+        <div class="table-responsive" th:if="${!#lists.isEmpty(report.byMonth)}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Mês</th>
+                    <th class="text-right">Receitas</th>
+                    <th class="text-right">Despesas</th>
+                    <th class="text-right">Saldo</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${report.byMonth}">
+                    <td th:text="${item.month}">2026-01</td>
+                    <td class="text-right text-income"
+                        th:text="${#numbers.formatDecimal(item.income, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                    <td class="text-right text-expense"
+                        th:text="${#numbers.formatDecimal(item.expense, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                    <td class="text-right"
+                        th:classappend="${item.balance.signum() >= 0} ? 'text-income' : 'text-expense'"
+                        th:text="${#numbers.formatDecimal(item.balance, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="empty" th:if="${#lists.isEmpty(report.byMonth)}">Sem dados no período</p>
+    </div>
+</main>
+</body>
+</html>

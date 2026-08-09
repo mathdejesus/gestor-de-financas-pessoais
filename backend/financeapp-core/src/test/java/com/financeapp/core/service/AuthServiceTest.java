@@ -155,4 +155,29 @@ class AuthServiceTest {
         assertEquals(0, user.getFailedLoginAttempts());
         assertNull(user.getLockedUntil());
     }
+
+    @Test
+    void logout_shouldBumpTokenVersionToRevokeTokens() {
+        User user = User.builder()
+                .id(7L)
+                .email("logout@test.com")
+                .passwordHash("hashed")
+                .tokenVersion(2)
+                .build();
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        authService.logout(7L);
+
+        assertEquals(3, user.getTokenVersion());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void logout_withNonExistentUser_shouldThrowResourceNotFoundException() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(com.financeapp.core.exception.ResourceNotFoundException.class,
+                () -> authService.logout(99L));
+    }
 }

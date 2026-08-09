@@ -133,7 +133,6 @@ public class ReportService {
 
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, new Color(31, 41, 55));
             Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, new Color(31, 41, 55));
-            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.DARK_GRAY);
             Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.GRAY);
 
             Paragraph title = new Paragraph("Financial Report", titleFont);

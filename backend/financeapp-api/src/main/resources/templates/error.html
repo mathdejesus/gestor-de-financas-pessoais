@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme}">
+<head th:replace="~{fragments/layout :: head('Erro')}"></head>
+<body>
+<main class="auth-container">
+    <div class="card auth-card">
+        <h1 class="auth-brand">Ops!</h1>
+        <p class="auth-subtitle">Algo deu errado ao processar sua requisição.</p>
+        <div class="form-actions">
+            <a th:href="@{/dashboard}" class="btn btn-primary">Voltar ao início</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

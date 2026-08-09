@@ -1,0 +1,17 @@
+{
+  "name": "FinanceApp",
+  "short_name": "FinanceApp",
+  "description": "Gestor de finanças pessoais — server-rendered, processado no backend.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#002b36",
+  "theme_color": "#002b36",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

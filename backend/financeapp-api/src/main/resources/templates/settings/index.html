@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme}">
+<head th:replace="~{fragments/layout :: head('Configurações')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar('settings')}"></nav>
+
+<main class="container">
+    <header class="page-header">
+        <h1>Configurações</h1>
+    </header>
+
+    <div th:if="${param.profileUpdated != null}" class="alert alert-success">Perfil atualizado com sucesso.</div>
+    <div th:if="${param.passwordUpdated != null}" class="alert alert-success">Senha alterada com sucesso.</div>
+
+    <div class="settings-grid">
+        <div class="card">
+            <h2>Perfil</h2>
+            <div th:if="${#fields.hasErrors('profileForm')}" class="alert alert-error">
+                <span th:each="err : ${#fields.errors('profileForm.*')}" th:text="${err}">erro</span>
+            </div>
+            <form th:action="@{/settings/profile}" th:object="${profileForm}" method="post" class="form-stack">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <div class="form-group">
+                    <label for="profileName">Nome</label>
+                    <input type="text" id="profileName" th:field="*{name}" required minlength="2">
+                </div>
+                <div class="form-group">
+                    <label for="profileEmail">E-mail</label>
+                    <input type="email" id="profileEmail" th:field="*{email}" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Salvar perfil</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Alterar senha</h2>
+            <div th:if="${passwordError}" class="alert alert-error" th:text="${passwordError}">Erro</div>
+            <div th:if="${#fields.hasErrors('passwordForm')}" class="alert alert-error">
+                <span th:each="err : ${#fields.errors('passwordForm.*')}" th:text="${err}">erro</span>
+            </div>
+            <form th:action="@{/settings/password}" th:object="${passwordForm}" method="post" class="form-stack">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <div class="form-group">
+                    <label for="currentPassword">Senha atual</label>
+                    <input type="password" id="currentPassword" th:field="*{currentPassword}" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">Nova senha</label>
+                    <input type="password" id="newPassword" th:field="*{newPassword}" required minlength="8"
+                           placeholder="Mínimo 8 caracteres">
+                </div>
+                <button type="submit" class="btn btn-primary">Alterar senha</button>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

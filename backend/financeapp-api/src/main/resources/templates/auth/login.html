@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:attr="data-theme=${theme}">
+<head th:replace="~{fragments/layout :: head('Entrar')}"></head>
+<body>
+<main class="auth-container">
+    <div class="card auth-card">
+        <h1 class="auth-brand">FinanceApp</h1>
+        <p class="auth-subtitle">Entre para gerenciar suas finanças</p>
+
+        <div th:if="${loginError}" class="alert alert-error" th:text="${loginError}">Erro</div>
+
+        <form th:action="@{/login}" method="post" class="form-stack">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" th:value="${loginRequest.email}" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+        </form>
+
+        <p class="auth-footer">
+            Não tem uma conta?
+            <a th:href="@{/register}">Cadastre-se</a>
+        </p>
+    </div>
+</main>
+</body>
+</html>
