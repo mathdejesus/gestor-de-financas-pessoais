@@ -4,373 +4,172 @@
 
 ---
 
-## 📋 Visão Geral
+## 📋 Título e Descrição
 
-O **Gestor de Finanças Pessoais** é uma aplicação fullstack desenvolvida para oferecer controle granular sobre receitas, despesas e patrimônio pessoal, com a mesma rigorosidade de segurança e precisão exigida por sistemas financeiros corporativos.
+O **Gestor de Finanças Pessoais** é uma aplicação full-stack desenvolvida para oferecer controle granular sobre receitas, despesas e patrimônio pessoal. Ele foi criado com a mesma rigorosidade de segurança e precisão exigida por sistemas financeiros corporativos, resolvendo o problema da falta de exatidão e confiabilidade nas aplicações financeiras comuns. 
+
+O sistema lida com dinheiro utilizando cálculos de precisão estrita (sem uso de ponto flutuante, evitando erros de arredondamento) e protege o acesso com um robusto sistema de autenticação e proteção CSRF. A interface é renderizada diretamente no servidor (Server-Side Rendering), proporcionando um carregamento extremamente rápido e mantendo a lógica de negócios segura no backend.
 
 ### Características Principais
-- 💳 Gerenciamento de transações com precisão decimal (sem ponto flutuante)
-- 🏷️ Categorização inteligente de despesas e receitas
-- 📊 Relatórios e análises financeiras em tempo real
-- 🔐 Criptografia de dados sensíveis (PII)
-- 🧪 Testes automatizados (Unit + Integration)
-- 🚀 CI/CD robusto com GitHub Actions
-- 📈 Auditoria completa de operações financeiras
+- 💳 Gerenciamento de transações com precisão monetária (`BigDecimal`).
+- 🔐 Autenticação JWT estrita (cookies HttpOnly, rotação de tokens).
+- 🛡️ Proteção robusta contra CSRF.
+- 🎨 Interface fluida com renderização HTML no lado do servidor (Thymeleaf), tema adaptável (claro/escuro - Solarized) via CSS.
+- 🧪 Ampla cobertura de testes (Testcontainers para banco de dados).
+- 🚀 Suporte a PWA offline para assets estáticos.
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 🛠️ Tecnologias Utilizadas
 
-### Frontend
-- **Runtime:** Node.js 24.x
-- **Framework:** (React/Vue/Angular - especificar)
-- **Build:** Vite/Webpack
-- **Styling:** Tailwind CSS / SCSS
-- **Testes:** Vitest/Jest
+O projeto adota uma arquitetura clássica sem frameworks complexos no frontend, centralizando a lógica no ecossistema Spring:
 
-### Backend
-- **Runtime:** Java 21+ / Python 3.11+
-- **Framework:** Spring Boot / FastAPI
-- **Database:** PostgreSQL 15+
-- **Cache:** Redis (opcional, para sessões)
-- **ORM:** Hibernate/JPA / SQLAlchemy
-
-### DevOps & CI/CD
-- **Containerização:** Docker
-- **Orquestração:** Docker Compose
-- **CI/CD:** GitHub Actions
-- **Versionamento:** Semantic Versioning (SemVer)
+- **Linguagem Principal:** Java 21
+- **Backend Framework:** Spring Boot 3.2 (Web, Security, Data JPA, Validation)
+- **Banco de Dados:** PostgreSQL 15
+- **Renderização de Páginas (SSR):** Thymeleaf (com HTML e CSS puros)
+- **Gerenciador de Dependências:** Maven
+- **Migrações de Banco de Dados:** Flyway
+- **Testes:** JUnit 5, MockMvc e Testcontainers (banco de dados real para testes de integração).
+- **Segurança & Resiliência:** Spring Security, JWT (io.jsonwebtoken), Resilience4j (Rate Limiting).
+- **Containerização:** Docker e Docker Compose
 
 ---
 
-## 📦 Instalação & Setup
+## 📦 Pré-requisitos
 
-### Pré-requisitos
-```bash
-- Node.js 24.x ou superior
-- Java 21+ ou Python 3.11+
-- PostgreSQL 15+
-- Docker & Docker Compose (opcional, recomendado)
-- Git
-```
+Para executar e testar o projeto localmente, você precisará ter instalado em sua máquina:
 
-### Instalação Local
+- **Java 21**
+- **Maven** (A ferramenta principal para build e testes)
+- **Docker e Docker Compose** (Necessários para subir o banco de dados via Testcontainers e rodar o ambiente completo)
+- **Git** para versionamento
+- Uma ferramenta de linha de comando que suporte **OpenSSL** (para gerar os segredos do JWT)
 
-#### 1. Clone o repositório
+---
+
+## 🚀 Como Executar
+
+### 1. Clonando o Repositório
+
 ```bash
 git clone https://github.com/mathofjesus/gestor-de-financas-pessoais.git
 cd gestor-de-financas-pessoais
 ```
 
-#### 2. Setup com Docker Compose (Recomendado)
-```bash
-docker-compose up -d
-```
+### 2. Configurando o Ambiente
 
-Isso inicia:
-- Backend na porta `8080` (ou configurada)
-- Frontend na porta `3000`
-- PostgreSQL na porta `5432`
-- Redis na porta `6379` (se aplicável)
-
-#### 3. Setup Manual
-
-**Backend:**
-```bash
-cd backend/
-# Para Java/Spring Boot
-./mvnw clean install
-./mvnw spring-boot:run
-
-# Ou para Python/FastAPI
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
-
-**Frontend:**
-```bash
-cd frontend/
-npm install
-npm run dev
-```
-
-#### 4. Configuração de Variáveis de Ambiente
-Crie arquivos `.env` baseado em `.env.example`:
+Copie o arquivo de exemplo para gerar suas próprias variáveis de ambiente:
 
 ```bash
-# Backend (.env)
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=gestor_financas
-DB_USER=postgres
-DB_PASSWORD=your_secure_password
-
-JWT_SECRET=your_jwt_secret_key
-ENCRYPTION_KEY=your_encryption_key_32_chars
-
-# Frontend (.env)
-VITE_API_BASE_URL=http://localhost:8080/api
+cp .env.example .env
 ```
-
----
-
-## 🏗️ Arquitetura
-
-### Diagrama de Componentes
+Edite o arquivo `.env` para inserir uma senha para o banco de dados (`POSTGRES_PASSWORD`) e gerar um segredo JWT. 
+Para gerar um segredo forte e válido (sem quebras de linha), execute:
+```bash
+openssl rand -base64 64 | tr -d '\n'
 ```
-┌─────────────────────────────────────────────────────┐
-│                    Frontend (React)                 │
-│         (Componentes, State, Roteamento)            │
-└────────────────────┬────────────────────────────────┘
-                     │ (REST API / GraphQL)
-┌────────────────────▼────────────────────────────────┐
-│                 API Gateway / Express                │
-│            (Validação, Autenticação, CORS)          │
-└────────────────────┬────────────────────────────────┘
-                     │
-        ┌────────────┼────────────┐
-        ▼            ▼            ▼
-┌──────────────┐ ┌─────────┐ ┌─────────┐
-│  Controllers │ │ Services│ │Middleware│
-│ (Endpoints)  │ │(Lógica) │ │  (Auth)  │
-└──────────────┘ └─────────┘ └─────────┘
-        │            │
-        └────────────┼────────────┘
-                     │
-┌────────────────────▼────────────────────────────────┐
-│            Repository / Data Access Layer            │
-│        (ORM: Hibernate/JPA, SQLAlchemy)             │
-└────────────────────┬────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────┐
-│              PostgreSQL Database                    │
-│        (Transações ACID, Integridade Referencial)   │
-└────────────────────────────────────────────────────┘
-```
+Copie o resultado e insira na variável `JWT_SECRET` no arquivo `.env`.
 
-### Padrões de Projeto
-- **Clean Architecture:** Separação clara entre camadas (Presentation, Business, Data)
-- **Dependency Injection:** IoC container para gerenciamento de dependências
-- **Repository Pattern:** Abstração de acesso a dados
-- **Service Layer:** Lógica de negócios isolada
-- **DTOs:** Transfer Objects para API contracts
+### 3. Rodando com Docker Compose (Modo Produção/Padrão)
 
----
-
-## 🔐 Requisitos de Segurança (CRÍTICO)
-
-### ✅ Obrigatórios
-- [ ] **Autenticação:** JWT com refresh tokens + rate limiting
-- [ ] **Validação de Input:** Whitelist validation, proteção contra injeção (SQL, NoSQL, XSS)
-- [ ] **Criptografia:** Senhas com bcrypt (min 12 rounds), dados sensíveis com AES-256
-- [ ] **CORS:** Configurado strictamente, sem `*`
-- [ ] **HTTPS:** Obrigatório em produção
-- [ ] **CSRF Protection:** Token CSRF em formulários
-- [ ] **Precisão Monetária:** `BigDecimal`/`Decimal`, nunca `float`/`double`
-- [ ] **Auditoria:** Log de todas as operações financeiras (quem, quando, o quê)
-- [ ] **Testes de Segurança:** SAST/DAST integrados no CI/CD
-
-### Exemplo: Tratamento de Transações Financeiras
-```java
-// ✅ CORRETO
-BigDecimal amount = new BigDecimal("100.50");
-transaction.setAmount(amount);
-
-// ❌ ERRADO
-double amount = 100.50; // Risco de perda de precisão
-transaction.setAmount(amount);
-```
-
----
-
-## 🧪 Testes
-
-### Executar Testes
+Esta é a maneira mais simples de rodar a aplicação completa (Banco de Dados + Aplicação Web).
 
 ```bash
-# Backend - Unit Tests
-./mvnw test
-
-# Backend - Integration Tests
-./mvnw verify -Pintegration-tests
-
-# Frontend - Unit Tests
-npm run test
-
-# Frontend - E2E Tests (Cypress/Playwright)
-npm run test:e2e
-
-# Cobertura de Código
-npm run coverage
+docker compose up -d
 ```
+A aplicação estará acessível em: `http://localhost:8080`.
 
-### Padrão de Teste
-- **Unit Tests:** Lógica de negócios (Services, Repositories) - Min. 80% cobertura
-- **Integration Tests:** Endpoints, banco de dados, transações
-- **E2E Tests:** Fluxos críticos (login, transações, relatórios)
+### 4. Rodando Localmente (Modo Desenvolvimento)
 
----
+Se você desejar rodar a aplicação para desenvolvimento diretamente com Maven (usa banco H2 em memória, tabelas são dropadas a cada execução, migrações do Flyway desativadas):
 
-## 📊 Modelo de Dados (DDL)
-
-Exemplos de tabelas críticas:
-
-```sql
--- Usuários
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Contas
-CREATE TABLE accounts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name VARCHAR(100) NOT NULL,
-  balance NUMERIC(19, 2) NOT NULL DEFAULT 0,
-  currency VARCHAR(3) DEFAULT 'BRL',
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Transações
-CREATE TABLE transactions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  type VARCHAR(20) NOT NULL CHECK (type IN ('INCOME', 'EXPENSE')),
-  amount NUMERIC(19, 2) NOT NULL,
-  category VARCHAR(100),
-  description TEXT,
-  transaction_date DATE NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW(),
-  CONSTRAINT amount_positive CHECK (amount > 0)
-);
-
--- Auditoria
-CREATE TABLE audit_log (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
-  entity_type VARCHAR(50) NOT NULL,
-  operation VARCHAR(20) NOT NULL,
-  old_values JSONB,
-  new_values JSONB,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE INDEX idx_audit_log_user_id ON audit_log(user_id);
-CREATE INDEX idx_transactions_account_id ON transactions(account_id);
-CREATE INDEX idx_transactions_date ON transactions(transaction_date);
-```
-
----
-
-## 🚀 Deploy
-
-### Checklist de Deploy
-
-- [ ] Testes passando (Unit + Integration + E2E)
-- [ ] Code review aprovado
-- [ ] Variáveis de ambiente configuradas
-- [ ] Backup do banco de dados realizado
-- [ ] Migração de schema executada em staging
-- [ ] Métricas e logs configurados
-- [ ] Rollback plan documentado
-- [ ] Documentação de mudanças atualizada
-
-### Produção
+Primeiro, exporte o seu secret JWT (Necessário para qualquer execução do backend):
 ```bash
-# Build da imagem Docker
-docker build -t gestor-financas:latest .
-
-# Push para registry
-docker push your-registry/gestor-financas:latest
-
-# Deploy (Kubernetes/ECS/Heroku)
-# Siga o guia específico de sua plataforma
+export JWT_SECRET="sua-chave-gerada-aqui"
 ```
 
----
-
-## 🤝 Contribuindo
-
-### Padrões de Código Obrigatórios
-1. **Lint & Formatting:** ESLint (Frontend), Checkstyle/Prettier (Backend)
-2. **Commits:** Semantic Commit Messages (`feat:`, `fix:`, `docs:`, `test:`)
-3. **Branches:** `feature/`, `bugfix/`, `hotfix/` com ticket ID
-4. **Pull Requests:**
-   - Descrição clara do problema e solução
-   - Testes inclusos
-   - Checklist de verificação
-   - Mínimo 1 aprovação de code review
-
-### Workflow Git
+Em seguida, dentro do diretório `backend`, execute os comandos abaixo:
 ```bash
-# 1. Crie branch
-git checkout -b feature/JIRA-123-descriptive-name
+cd backend
+mvn spring-boot:run -pl financeapp-api -Pdev -Dspring-boot.run.profiles=dev
+```
+Acesse: `http://localhost:8080`. O console do banco H2 fica disponível em `http://localhost:8080/h2-console`.
 
-# 2. Commit com mensagem semântica
-git commit -m "feat(auth): add JWT refresh token rotation"
+### 5. Executando os Testes
 
-# 3. Push e abra PR
-git push origin feature/JIRA-123-descriptive-name
+Para rodar todos os testes de unidade e de integração, você **precisa ter o daemon do Docker rodando** na sua máquina, já que os repositórios usam a imagem PostgreSQL via Testcontainers.
 
-# 4. Aguarde CI/CD e code review
-# 5. Merge via PR (com squash recomendado)
+Lembre-se de definir a variável de ambiente JWT_SECRET caso não tenha exportado no passo anterior.
+```bash
+cd backend
+export JWT_SECRET="sua-chave-gerada-aqui"
+mvn test
+```
+Para realizar a verificação de código (incluindo testes), formatação (Spotless) e geração de relatórios de cobertura (JaCoCo):
+```bash
+cd backend
+mvn clean verify
 ```
 
 ---
 
-## 📝 Documentação Adicional
+## 🏗️ Estrutura do Projeto
 
-| Documento | Localização |
-|-----------|------------|
-| Guia de Contribuição | `CONTRIBUTING.md` |
-| Política de Segurança | `SECURITY.md` |
-| Changelog | `CHANGELOG.md` |
-| API Documentation | `/docs/api-swagger.yaml` |
-| Architecture Decision Records | `/docs/adr/` |
+O projeto é modularizado pelo Maven, separando claramente a lógica de negócios da camada web:
 
----
-
-## 🐛 Reportar Issues
-
-Encontrou um bug ou quer sugerir uma feature?
-
-1. Verifique se já existe uma issue aberta
-2. Abra uma issue com template apropriado:
-   - **Bug Report:** Passos para reproduzir + logs esperados
-   - **Feature Request:** Contexto + caso de uso + critérios de aceita
-
-ção
-
----
-
-## 📞 Suporte & Contato
-
-- **Issues:** GitHub Issues
-- **Discussões:** GitHub Discussions
-- **Security:** SECURITY.md (não publique vulnerabilidades em issues)
+```
+gestor-de-financas-pessoais/
+├── backend/
+│   ├── financeapp-api/        # Camada de Apresentação (Web) e Configuração
+│   │   └── src/main/
+│   │       ├── java/.../api/web/ # Controladores MVC (Web controllers) e Segurança
+│   │       └── resources/
+│   │           ├── db/migration/ # Scripts SQL do Flyway
+│   │           ├── static/       # CSS (Solarized), SVGs, ícones e sw.js (PWA)
+│   │           └── templates/    # HTMLs renderizados pelo Thymeleaf
+│   │
+│   └── financeapp-core/       # Camada de Domínio e Lógica de Negócios
+│       └── src/main/java/.../
+│           ├── model/         # Entidades JPA (User, Account, Transaction, etc)
+│           ├── repository/    # Interfaces do Spring Data JPA
+│           └── service/       # Lógica de negócios isolada e utilitários (ex: JwtUtil)
+│
+├── docker-compose.yml         # Arquivo de orquestração local de infraestrutura
+└── .env.example               # Exemplo de configuração de ambiente e segredos
+```
+*Nota: Não existem dependências de bibliotecas de frontend (Node.js/npm). Toda a interface gráfica foi desenvolvida com HTML/CSS puro, entregue via Server-Side Rendering (SSR) pelo `financeapp-api`.*
 
 ---
 
-## 📜 Licença
+## 🤝 Como Contribuir
 
-Este projeto está licenciado sob a [MIT License](LICENSE).
+Toda ajuda é bem-vinda! Siga estes passos para contribuir:
+
+1. **Faça um Fork** do projeto.
+2. **Crie uma branch** para sua feature ou correção:
+   ```bash
+   git checkout -b feature/minha-nova-funcionalidade
+   ```
+3. **Padrões de Código:** O projeto usa a ferramenta **Spotless** para garantir a formatação (Google Java Format).
+   Para aplicar a formatação correta ao seu código alterado, rode dentro do diretório `backend/`:
+   ```bash
+   mvn spotless:apply
+   ```
+4. **Comite suas mudanças** usando mensagens claras (O Padrão *Conventional Commits* é recomendado):
+   ```bash
+   git commit -m "feat: adicionar exportação de relatórios em CSV"
+   ```
+5. **Faça um Push** para a sua branch:
+   ```bash
+   git push origin feature/minha-nova-funcionalidade
+   ```
+6. **Abra um Pull Request** no repositório original descrevendo as mudanças feitas.
+
+**Dica CRÍTICA**: Antes de abrir o Pull Request, garanta que todos os testes estejam passando executando `mvn clean verify` no diretório `backend/`.
 
 ---
 
-## 🎯 Roadmap
-
-- [x] Autenticação e autorização
-- [ ] Integração com bancos (Open Banking)
-- [ ] Relatórios avançados (PDF export)
-- [ ] Notificações em tempo real
-- [ ] Aplicativo mobile (React Native)
-- [ ] Sincronização multi-device
-- [ ] Suporte a múltiplas moedas
-- [ ] IA para categorização automática
-
+**Mantido por Matheus**
 
 `v1.0.0` | Última atualização: 2026
