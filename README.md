@@ -372,8 +372,5 @@ Este projeto está licenciado sob a [MIT License](LICENSE).
 - [ ] Suporte a múltiplas moedas
 - [ ] IA para categorização automática
 
----
-
-**Mantido com ❤️ e rigor profissional por Matheus**
 
 `v1.0.0` | Última atualização: 2026
